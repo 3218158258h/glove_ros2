@@ -4,6 +4,8 @@
 #include <limits>
 #include <signal.h>
 #include <atomic>
+#include <algorithm>
+#include <array>
 
 #include <SenseGlove/Connect/SGConnect.hpp>
 #include <SenseGlove/Core/Debugger.hpp>
@@ -22,6 +24,11 @@
 
 using namespace SGCore;
 using namespace SGCore::Kinematics;
+
+// 手指名称，索引顺序与 SDK 返回数组一致：Thumb -> Pinky
+static const std::array<const char *, 5> kFingerNames = {
+    "拇指", "食指", "中指", "无名指", "小指"
+};
 
 // 原子停止标志位
 static std::atomic<bool> stopFlag = false;
@@ -97,7 +104,30 @@ static void GetHandPose(bool rightHand)
     if (HandLayer::GetHandPose(rightHand, handPose))
     {
         std::cout << "成功获取" << hand << "的姿态数据：" << std::endl;
-        std::cout << handPose.ToString() << std::endl;
+        const auto &jointPositions = handPose.GetJointPositions();
+        const auto &jointRotations = handPose.GetJointRotations();
+        const auto &handAngles = handPose.GetHandAngles();
+
+        size_t fingerCount = std::min({jointPositions.size(), jointRotations.size(), handAngles.size()});
+        for (size_t fingerIndex = 0; fingerIndex < fingerCount; ++fingerIndex)
+        {
+            const auto &positions = jointPositions[fingerIndex];
+            const auto &rotations = jointRotations[fingerIndex];
+            const auto &angles = handAngles[fingerIndex];
+            size_t jointCount = std::min({positions.size(), rotations.size(), angles.size()});
+
+            const char *fingerName = (fingerIndex < kFingerNames.size()) ? kFingerNames[fingerIndex] : "未知手指";
+            std::cout << "  [" << fingerName << "]" << std::endl;
+            for (size_t jointIndex = 0; jointIndex < jointCount; ++jointIndex)
+            {
+                std::cout << "    关节" << jointIndex
+                          << " | Position: " << positions[jointIndex].ToString()
+                          << " | Rotation: " << rotations[jointIndex].ToString()
+                          << " | Angle: " << angles[jointIndex].ToString()
+                          << std::endl;
+            }
+        }
+        std::cout << std::endl;
     }
     else
     {
