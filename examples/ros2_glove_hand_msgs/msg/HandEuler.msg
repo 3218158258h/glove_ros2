@@ -1,5 +1,5 @@
 # Unix epoch time
-int32 stamp_sec
+int64 stamp_sec
 uint32 stamp_nanosec
 
 bool is_right_hand

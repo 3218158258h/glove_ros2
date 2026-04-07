@@ -21,7 +21,7 @@ using namespace SGCore;
 using namespace SGCore::Kinematics;
 
 static std::atomic<bool> g_stop{false};
-static constexpr int kPublishIntervalMs = 15; // Keep close to the SDK example update rhythm.
+static constexpr std::chrono::milliseconds kPublishInterval{15}; // Keep close to the SDK example update rhythm.
 
 enum JointCode : uint8_t
 {
@@ -68,7 +68,7 @@ static void FillHandEulerMessage(const HandPose &pose, glove_hand_msgs_msg_HandE
     const auto sec = std::chrono::duration_cast<std::chrono::seconds>(now);
     const auto nsec = std::chrono::duration_cast<std::chrono::nanoseconds>(now - sec);
 
-    outMsg.stamp_sec = static_cast<int32_t>(sec.count());
+    outMsg.stamp_sec = static_cast<int64_t>(sec.count());
     outMsg.stamp_nanosec = static_cast<uint32_t>(nsec.count());
     outMsg.is_right_hand = pose.IsRight();
     outMsg.valid_joint_count = 0;
@@ -155,7 +155,7 @@ int main()
             }
         }
 
-        std::this_thread::sleep_for(std::chrono::milliseconds(kPublishIntervalMs));
+        std::this_thread::sleep_for(kPublishInterval);
     }
 
     dds_delete(participant);

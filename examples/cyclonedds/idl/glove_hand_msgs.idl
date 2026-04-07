@@ -10,7 +10,7 @@ module glove_hand_msgs {
     };
 
     struct HandEuler {
-      long stamp_sec;
+      long long stamp_sec;
       unsigned long stamp_nanosec;
       boolean is_right_hand;
       uint8 valid_joint_count;
