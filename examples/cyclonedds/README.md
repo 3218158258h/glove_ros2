@@ -41,7 +41,7 @@ idlc -l c -o generated idl/glove_hand_msgs.idl
 
 ```bash
 REPO_ROOT=/path/to/repository
-SGCORE_LIB_PATH=${REPO_ROOT}/lib/linux/v22/x86-64/debug  # example path, adjust for your platform/version
+SGCORE_LIB_PATH=${REPO_ROOT}/lib/linux/vXX/x86-64/debug  # replace vXX with your installed version
 c++ -std=c++17 \
   ${REPO_ROOT}/examples/cyclonedds/glove_dds_publisher.cpp \
   ${REPO_ROOT}/examples/cyclonedds/generated/glove_hand_msgs.c \

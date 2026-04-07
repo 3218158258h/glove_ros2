@@ -21,7 +21,7 @@ using namespace SGCore;
 using namespace SGCore::Kinematics;
 
 static std::atomic<bool> g_stop{false};
-static constexpr std::chrono::milliseconds kPublishInterval{15}; // Keep close to the SDK example update rhythm.
+static constexpr std::chrono::milliseconds kPublishInterval{15}; // ~66.7 Hz
 
 enum JointCode : uint8_t
 {
@@ -83,6 +83,7 @@ static void FillHandEulerMessage(const HandPose &pose, glove_hand_msgs_msg_HandE
             const Vect3D &e = angles[fingerIndex][jointIndex];
             auto &j = outMsg.joints[outIndex];
             j.finger = static_cast<uint8_t>(fingerIndex);
+            j.joint_index = static_cast<uint8_t>(jointIndex);
             j.joint = ToJointCode(fingerIndex, jointIndex);
             j.roll = e.GetX();
             j.pitch = e.GetY();

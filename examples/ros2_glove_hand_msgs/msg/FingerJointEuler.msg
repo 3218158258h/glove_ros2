@@ -26,6 +26,8 @@ uint8 IP=4
 uint8 UNKNOWN=255
 
 uint8 finger
+# Per-finger joint order index (0..2), independent from anatomical enum 'joint'
+uint8 joint_index
 uint8 joint
 float32 roll
 float32 pitch

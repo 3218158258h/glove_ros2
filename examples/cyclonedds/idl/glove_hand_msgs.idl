@@ -3,6 +3,7 @@ module glove_hand_msgs {
 
     struct FingerJointEuler {
       uint8 finger;
+      uint8 joint_index;
       uint8 joint;
       float roll;
       float pitch;
