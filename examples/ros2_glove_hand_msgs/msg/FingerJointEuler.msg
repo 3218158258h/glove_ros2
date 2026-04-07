@@ -5,7 +5,8 @@ uint8 MIDDLE=2
 uint8 RING=3
 uint8 PINKY=4
 
-# Joint code (generic anatomical naming)
+# Joint code (generic anatomical naming).
+# 注意：这是“关节类型枚举值”，不是每根手指内部的数组下标。
 uint8 CMC=0
 uint8 MCP=1
 uint8 PIP=2

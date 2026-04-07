@@ -66,6 +66,6 @@ ros2 topic echo /glove/hand_euler glove_hand_msgs/msg/HandEuler
 ## 关节编码约定
 
 - finger: `0..4 = Thumb/Index/Middle/Ring/Pinky`
-- joint:
-  - `Thumb`: `0(CMC), 1(MCP), 4(IP)`
-  - `Other fingers`: `1(MCP), 2(PIP), 3(DIP)`
+- joint（关节类型枚举值，不是每根手指内部关节序号）:
+  - `Thumb` 三个关节序号是 `0/1/2`，对应 joint code: `0(CMC), 1(MCP), 4(IP)`
+  - `Other fingers` 三个关节序号是 `0/1/2`，对应 joint code: `1(MCP), 2(PIP), 3(DIP)`
