@@ -6,6 +6,8 @@
 #include <atomic>
 #include <algorithm>
 #include <array>
+#include <iomanip>
+#include <sstream>
 
 #include <SenseGlove/Connect/SGConnect.hpp>
 #include <SenseGlove/Core/Debugger.hpp>
@@ -29,6 +31,61 @@ using namespace SGCore::Kinematics;
 static const std::array<const char *, 5> kFingerNames = {
     "Thumb", "Index", "Middle", "Ring", "Pinky"
 };
+
+static std::string FormatVect3(const Vect3D &v)
+{
+    std::ostringstream oss;
+    oss << std::fixed << std::setprecision(3)
+        << v.GetX() << ", " << v.GetY() << ", " << v.GetZ();
+    return oss.str();
+}
+
+static std::string FormatQuat(const Quat &q)
+{
+    std::ostringstream oss;
+    oss << std::fixed << std::setprecision(3)
+        << q.GetX() << ", " << q.GetY() << ", " << q.GetZ() << ", " << q.GetW();
+    return oss.str();
+}
+
+static const char *FingerNameOrUnknown(size_t fingerIndex)
+{
+    return (fingerIndex < kFingerNames.size()) ? kFingerNames[fingerIndex] : "Unknown";
+}
+
+static void PrintVect3Section(const char *sectionName, const std::vector<std::vector<Vect3D>> &data)
+{
+    std::cout << "  [" << sectionName << "]" << std::endl;
+    for (size_t fingerIndex = 0; fingerIndex < data.size(); ++fingerIndex)
+    {
+        const auto &fingerData = data[fingerIndex];
+        const char *fingerName = FingerNameOrUnknown(fingerIndex);
+        std::cout << "    [" << fingerName << "]" << std::endl;
+        for (size_t jointIndex = 0; jointIndex < fingerData.size(); ++jointIndex)
+        {
+            std::cout << "      关节" << jointIndex
+                      << ": " << FormatVect3(fingerData[jointIndex])
+                      << std::endl;
+        }
+    }
+}
+
+static void PrintQuatSection(const char *sectionName, const std::vector<std::vector<Quat>> &data)
+{
+    std::cout << "  [" << sectionName << "]" << std::endl;
+    for (size_t fingerIndex = 0; fingerIndex < data.size(); ++fingerIndex)
+    {
+        const auto &fingerData = data[fingerIndex];
+        const char *fingerName = FingerNameOrUnknown(fingerIndex);
+        std::cout << "    [" << fingerName << "]" << std::endl;
+        for (size_t jointIndex = 0; jointIndex < fingerData.size(); ++jointIndex)
+        {
+            std::cout << "      关节" << jointIndex
+                      << ": " << FormatQuat(fingerData[jointIndex])
+                      << std::endl;
+        }
+    }
+}
 
 // 原子停止标志位
 static std::atomic<bool> stopFlag = false;
@@ -110,46 +167,17 @@ static void GetHandPose(bool rightHand)
 
         if (jointPositions.size() != jointRotations.size() || jointPositions.size() != handAngles.size())
         {
-            std::cout << "警告：手指维度数据长度不一致，输出将截断到最小长度。"
-                      << " positions=" << jointPositions.size()
+            std::cout << "警告：手指维度数据长度不一致，不做跨类型截断。" << std::endl;
+            std::cout << "      Position/Rotation/Angle 将分别按各自长度输出。"
+                      << " (positions=" << jointPositions.size()
                       << ", rotations=" << jointRotations.size()
-                      << ", angles=" << handAngles.size()
+                      << ", angles=" << handAngles.size() << ")"
                       << std::endl;
         }
-        size_t fingerCount = std::min({jointPositions.size(), jointRotations.size(), handAngles.size()});
-        if (fingerCount > kFingerNames.size())
-        {
-            std::cout << "警告：SDK返回了超出预期的手指数。count=" << fingerCount
-                      << "，已知名称数=" << kFingerNames.size()
-                      << "，超出部分将标记为 Unknown。" << std::endl;
-        }
-        for (size_t fingerIndex = 0; fingerIndex < fingerCount; ++fingerIndex)
-        {
-            const auto &positions = jointPositions[fingerIndex];
-            const auto &rotations = jointRotations[fingerIndex];
-            const auto &angles = handAngles[fingerIndex];
-            const char *fingerName = (fingerIndex < kFingerNames.size()) ? kFingerNames[fingerIndex] : "Unknown";
-            if (positions.size() != rotations.size() || positions.size() != angles.size())
-            {
-                std::cout << "  警告：Finger " << fingerName
-                          << " 的关节数据长度不一致，输出将截断到最小长度。"
-                          << " positions=" << positions.size()
-                          << ", rotations=" << rotations.size()
-                          << ", angles=" << angles.size()
-                          << std::endl;
-            }
-            size_t jointCount = std::min({positions.size(), rotations.size(), angles.size()});
 
-            std::cout << "  [" << fingerName << "]" << std::endl;
-            for (size_t jointIndex = 0; jointIndex < jointCount; ++jointIndex)
-            {
-                std::cout << "    关节" << jointIndex
-                          << " | Position: " << positions[jointIndex].ToString()
-                          << " | Rotation: " << rotations[jointIndex].ToString()
-                          << " | Angle: " << angles[jointIndex].ToString()
-                          << std::endl;
-            }
-        }
+        PrintVect3Section("Position", jointPositions);
+        PrintQuatSection("Rotation", jointRotations);
+        PrintVect3Section("Angle", handAngles);
         std::cout << std::endl;
     }
     else
