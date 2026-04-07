@@ -53,6 +53,28 @@ static const char *FingerNameOrUnknown(size_t fingerIndex)
     return (fingerIndex < kFingerNames.size()) ? kFingerNames[fingerIndex] : "Unknown";
 }
 
+static std::string JointNameForFinger(size_t fingerIndex, size_t jointIndex)
+{
+    // Thumb: CMC -> MCP -> IP
+    static const std::array<const char *, 3> kThumbJointNames = {
+        "CMC", "MCP", "IP"
+    };
+    // Other fingers: MCP -> PIP -> DIP
+    static const std::array<const char *, 3> kFingerJointNames = {
+        "MCP", "PIP", "DIP"
+    };
+
+    if (fingerIndex == 0 && jointIndex < kThumbJointNames.size())
+    {
+        return kThumbJointNames[jointIndex];
+    }
+    if (fingerIndex > 0 && jointIndex < kFingerJointNames.size())
+    {
+        return kFingerJointNames[jointIndex];
+    }
+    return "UnknownJoint";
+}
+
 static void PrintVect3Section(const char *sectionName, const std::vector<std::vector<Vect3D>> &data)
 {
     std::cout << "  [" << sectionName << "]" << std::endl;
@@ -63,7 +85,8 @@ static void PrintVect3Section(const char *sectionName, const std::vector<std::ve
         std::cout << "    [" << fingerName << "]" << std::endl;
         for (size_t jointIndex = 0; jointIndex < fingerData.size(); ++jointIndex)
         {
-            std::cout << "      关节" << jointIndex
+            std::cout << "      " << JointNameForFinger(fingerIndex, jointIndex)
+                      << " (关节" << jointIndex << ")"
                       << ": " << FormatVect3(fingerData[jointIndex])
                       << std::endl;
         }
@@ -80,7 +103,8 @@ static void PrintQuatSection(const char *sectionName, const std::vector<std::vec
         std::cout << "    [" << fingerName << "]" << std::endl;
         for (size_t jointIndex = 0; jointIndex < fingerData.size(); ++jointIndex)
         {
-            std::cout << "      关节" << jointIndex
+            std::cout << "      " << JointNameForFinger(fingerIndex, jointIndex)
+                      << " (关节" << jointIndex << ")"
                       << ": " << FormatQuat(fingerData[jointIndex])
                       << std::endl;
         }
