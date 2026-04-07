@@ -133,7 +133,7 @@ static void GetHandPose(bool rightHand)
 
         if (jointPositions.size() != jointRotations.size() || jointPositions.size() != handAngles.size())
         {
-            std::cout << "警告：手指维度数据长度不一致，将分别按各自长度输出。"
+            std::cout << "警告：手指维度数据长度不一致，不做跨类型截断；Position/Rotation/Angle 将分别按各自长度输出。"
                       << " positions=" << jointPositions.size()
                       << ", rotations=" << jointRotations.size()
                       << ", angles=" << handAngles.size()
