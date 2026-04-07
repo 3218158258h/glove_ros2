@@ -1,4 +1,5 @@
 file(REMOVE_RECURSE
+  "CMakeFiles/client.dir/link.d"
   "CMakeFiles/client.dir/examples/sgcore-client.cpp.o"
   "CMakeFiles/client.dir/examples/sgcore-client.cpp.o.d"
   "client"
