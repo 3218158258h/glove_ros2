@@ -27,7 +27,7 @@ using namespace SGCore::Kinematics;
 
 // 手指名称，索引顺序与 SDK 返回数组一致：Thumb -> Pinky
 static const std::array<const char *, 5> kFingerNames = {
-    "拇指", "食指", "中指", "无名指", "小指"
+    "Thumb", "Index", "Middle", "Ring", "Pinky"
 };
 
 // 原子停止标志位
@@ -108,15 +108,24 @@ static void GetHandPose(bool rightHand)
         const auto &jointRotations = handPose.GetJointRotations();
         const auto &handAngles = handPose.GetHandAngles();
 
+        if (jointPositions.size() != jointRotations.size() || jointPositions.size() != handAngles.size())
+        {
+            std::cout << "警告：手指维度数据长度不一致，输出将截断到最小长度。" << std::endl;
+        }
         size_t fingerCount = std::min({jointPositions.size(), jointRotations.size(), handAngles.size()});
         for (size_t fingerIndex = 0; fingerIndex < fingerCount; ++fingerIndex)
         {
             const auto &positions = jointPositions[fingerIndex];
             const auto &rotations = jointRotations[fingerIndex];
             const auto &angles = handAngles[fingerIndex];
+            if (positions.size() != rotations.size() || positions.size() != angles.size())
+            {
+                std::cout << "  警告：Finger " << fingerIndex
+                          << " 的关节数据长度不一致，输出将截断到最小长度。" << std::endl;
+            }
             size_t jointCount = std::min({positions.size(), rotations.size(), angles.size()});
 
-            const char *fingerName = (fingerIndex < kFingerNames.size()) ? kFingerNames[fingerIndex] : "未知手指";
+            const char *fingerName = (fingerIndex < kFingerNames.size()) ? kFingerNames[fingerIndex] : "Unknown";
             std::cout << "  [" << fingerName << "]" << std::endl;
             for (size_t jointIndex = 0; jointIndex < jointCount; ++jointIndex)
             {
