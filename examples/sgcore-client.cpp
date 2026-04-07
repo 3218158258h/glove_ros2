@@ -110,7 +110,11 @@ static void GetHandPose(bool rightHand)
 
         if (jointPositions.size() != jointRotations.size() || jointPositions.size() != handAngles.size())
         {
-            std::cout << "警告：手指维度数据长度不一致，输出将截断到最小长度。" << std::endl;
+            std::cout << "警告：手指维度数据长度不一致，输出将截断到最小长度。"
+                      << " positions=" << jointPositions.size()
+                      << ", rotations=" << jointRotations.size()
+                      << ", angles=" << handAngles.size()
+                      << std::endl;
         }
         size_t fingerCount = std::min({jointPositions.size(), jointRotations.size(), handAngles.size()});
         for (size_t fingerIndex = 0; fingerIndex < fingerCount; ++fingerIndex)
@@ -121,7 +125,11 @@ static void GetHandPose(bool rightHand)
             if (positions.size() != rotations.size() || positions.size() != angles.size())
             {
                 std::cout << "  警告：Finger " << fingerIndex
-                          << " 的关节数据长度不一致，输出将截断到最小长度。" << std::endl;
+                          << " 的关节数据长度不一致，输出将截断到最小长度。"
+                          << " positions=" << positions.size()
+                          << ", rotations=" << rotations.size()
+                          << ", angles=" << angles.size()
+                          << std::endl;
             }
             size_t jointCount = std::min({positions.size(), rotations.size(), angles.size()});
 
