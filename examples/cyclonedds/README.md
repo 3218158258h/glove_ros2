@@ -40,7 +40,7 @@ idlc -l c -o generated idl/glove_hand_msgs.idl
 > 你需要按本机安装路径调整 `-I/-L` 参数（CycloneDDS 与 SenseGlove 库）。
 
 ```bash
-REPO_ROOT=/path/to/glove_ros2
+REPO_ROOT=/path/to/repository
 c++ -std=c++17 \
   ${REPO_ROOT}/examples/cyclonedds/glove_dds_publisher.cpp \
   ${REPO_ROOT}/examples/cyclonedds/generated/glove_hand_msgs.c \

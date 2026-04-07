@@ -21,6 +21,7 @@ using namespace SGCore;
 using namespace SGCore::Kinematics;
 
 static std::atomic<bool> g_stop{false};
+static constexpr int kPublishIntervalMs = 15; // Keep close to the SDK example update rhythm.
 
 enum JointCode : uint8_t
 {
@@ -154,7 +155,7 @@ int main()
             }
         }
 
-        std::this_thread::sleep_for(std::chrono::milliseconds(15));
+        std::this_thread::sleep_for(std::chrono::milliseconds(kPublishIntervalMs));
     }
 
     dds_delete(participant);
