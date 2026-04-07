@@ -4,6 +4,8 @@
 #include <limits>
 #include <signal.h>
 #include <atomic>
+#include <algorithm>
+#include <array>
 
 #include <SenseGlove/Connect/SGConnect.hpp>
 #include <SenseGlove/Core/Debugger.hpp>
@@ -22,6 +24,11 @@
 
 using namespace SGCore;
 using namespace SGCore::Kinematics;
+
+// 手指名称，索引顺序与 SDK 返回数组一致：Thumb -> Pinky
+static const std::array<const char *, 5> kFingerNames = {
+    "Thumb", "Index", "Middle", "Ring", "Pinky"
+};
 
 // 原子停止标志位
 static std::atomic<bool> stopFlag = false;
@@ -97,7 +104,53 @@ static void GetHandPose(bool rightHand)
     if (HandLayer::GetHandPose(rightHand, handPose))
     {
         std::cout << "成功获取" << hand << "的姿态数据：" << std::endl;
-        std::cout << handPose.ToString() << std::endl;
+        const auto &jointPositions = handPose.GetJointPositions();
+        const auto &jointRotations = handPose.GetJointRotations();
+        const auto &handAngles = handPose.GetHandAngles();
+
+        if (jointPositions.size() != jointRotations.size() || jointPositions.size() != handAngles.size())
+        {
+            std::cout << "警告：手指维度数据长度不一致，输出将截断到最小长度。"
+                      << " positions=" << jointPositions.size()
+                      << ", rotations=" << jointRotations.size()
+                      << ", angles=" << handAngles.size()
+                      << std::endl;
+        }
+        size_t fingerCount = std::min({jointPositions.size(), jointRotations.size(), handAngles.size()});
+        if (fingerCount > kFingerNames.size())
+        {
+            std::cout << "警告：SDK返回了超出预期的手指数。count=" << fingerCount
+                      << "，已知名称数=" << kFingerNames.size()
+                      << "，超出部分将标记为 Unknown。" << std::endl;
+        }
+        for (size_t fingerIndex = 0; fingerIndex < fingerCount; ++fingerIndex)
+        {
+            const auto &positions = jointPositions[fingerIndex];
+            const auto &rotations = jointRotations[fingerIndex];
+            const auto &angles = handAngles[fingerIndex];
+            const char *fingerName = (fingerIndex < kFingerNames.size()) ? kFingerNames[fingerIndex] : "Unknown";
+            if (positions.size() != rotations.size() || positions.size() != angles.size())
+            {
+                std::cout << "  警告：Finger " << fingerName
+                          << " 的关节数据长度不一致，输出将截断到最小长度。"
+                          << " positions=" << positions.size()
+                          << ", rotations=" << rotations.size()
+                          << ", angles=" << angles.size()
+                          << std::endl;
+            }
+            size_t jointCount = std::min({positions.size(), rotations.size(), angles.size()});
+
+            std::cout << "  [" << fingerName << "]" << std::endl;
+            for (size_t jointIndex = 0; jointIndex < jointCount; ++jointIndex)
+            {
+                std::cout << "    关节" << jointIndex
+                          << " | Position: " << positions[jointIndex].ToString()
+                          << " | Rotation: " << rotations[jointIndex].ToString()
+                          << " | Angle: " << angles[jointIndex].ToString()
+                          << std::endl;
+            }
+        }
+        std::cout << std::endl;
     }
     else
     {
