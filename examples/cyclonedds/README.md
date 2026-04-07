@@ -24,7 +24,7 @@ source install/setup.bash
 在本仓库目录执行：
 
 ```bash
-cd /home/runner/work/glove_ros2/glove_ros2/examples/cyclonedds
+cd examples/cyclonedds
 mkdir -p generated
 idlc -l c -o generated idl/glove_hand_msgs.idl
 ```
@@ -38,11 +38,13 @@ idlc -l c -o generated idl/glove_hand_msgs.idl
 > 你需要按本机安装路径调整 `-I/-L` 参数（CycloneDDS 与 SenseGlove 库）。
 
 ```bash
+REPO_ROOT=/path/to/glove_ros2
 c++ -std=c++17 \
-  glove_dds_publisher.cpp generated/glove_hand_msgs.c \
+  ${REPO_ROOT}/examples/cyclonedds/glove_dds_publisher.cpp \
+  ${REPO_ROOT}/examples/cyclonedds/generated/glove_hand_msgs.c \
   -I generated \
-  -I /home/runner/work/glove_ros2/glove_ros2/include \
-  -L /home/runner/work/glove_ros2/glove_ros2/lib/linux/v22/x86-64/debug \
+  -I ${REPO_ROOT}/include \
+  -L ${REPO_ROOT}/lib/linux/v22/x86-64/debug \
   -lsgcore -lsgconnect -lddsc -lpthread \
   -o glove_dds_publisher
 ```
