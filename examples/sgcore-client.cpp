@@ -117,14 +117,21 @@ static void GetHandPose(bool rightHand)
                       << std::endl;
         }
         size_t fingerCount = std::min({jointPositions.size(), jointRotations.size(), handAngles.size()});
+        if (fingerCount > kFingerNames.size())
+        {
+            std::cout << "警告：SDK返回了超出预期的手指数。count=" << fingerCount
+                      << "，已知名称数=" << kFingerNames.size()
+                      << "，超出部分将标记为 Unknown。" << std::endl;
+        }
         for (size_t fingerIndex = 0; fingerIndex < fingerCount; ++fingerIndex)
         {
             const auto &positions = jointPositions[fingerIndex];
             const auto &rotations = jointRotations[fingerIndex];
             const auto &angles = handAngles[fingerIndex];
+            const char *fingerName = (fingerIndex < kFingerNames.size()) ? kFingerNames[fingerIndex] : "Unknown";
             if (positions.size() != rotations.size() || positions.size() != angles.size())
             {
-                std::cout << "  警告：Finger " << fingerIndex
+                std::cout << "  警告：Finger " << fingerName
                           << " 的关节数据长度不一致，输出将截断到最小长度。"
                           << " positions=" << positions.size()
                           << ", rotations=" << rotations.size()
@@ -133,7 +140,6 @@ static void GetHandPose(bool rightHand)
             }
             size_t jointCount = std::min({positions.size(), rotations.size(), angles.size()});
 
-            const char *fingerName = (fingerIndex < kFingerNames.size()) ? kFingerNames[fingerIndex] : "Unknown";
             std::cout << "  [" << fingerName << "]" << std::endl;
             for (size_t jointIndex = 0; jointIndex < jointCount; ++jointIndex)
             {
