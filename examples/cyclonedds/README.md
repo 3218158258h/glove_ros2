@@ -1,5 +1,7 @@
 # CycloneDDS 原生发布示例（C++）
 
+> English: Native CycloneDDS C++ publishing example for SenseGlove Euler joint data.
+
 本示例展示如何：
 
 1. 使用 `examples/ros2_glove_hand_msgs` 的同构消息定义；

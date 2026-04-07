@@ -6,6 +6,7 @@ uint8 RING=3
 uint8 PINKY=4
 
 # Joint code (generic anatomical naming).
+# Note: this is an anatomical enum code, not the per-finger joint array index.
 # 注意：这是“关节类型枚举值”，不是每根手指内部的数组下标。
 uint8 CMC=0
 uint8 MCP=1

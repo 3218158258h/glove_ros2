@@ -1,5 +1,7 @@
 # glove_hand_msgs
 
+> English: This package defines custom ROS2 messages for SenseGlove Euler joint data.
+
 用于导入到 ROS2 工作空间的自定义消息包，定义了手套欧拉角关节数据：
 
 - `FingerJointEuler.msg`
