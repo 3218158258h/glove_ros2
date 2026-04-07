@@ -1,0 +1,1 @@
+clang++ -stdlib=libc++ -fPIC CMakeFiles/client.dir/examples/sgcore-client.cpp.o -o client   -L/home/test/SenseGlove-API-master/lib/linux/v22/x86-64/debug  -Wl,-rpath,/home/test/SenseGlove-API-master/lib/linux/v22/x86-64/debug ../lib/linux/v22/x86-64/debug/libsgcore.so ../lib/linux/v22/x86-64/debug/libsgconnect.so -lc++ -lc++abi 
