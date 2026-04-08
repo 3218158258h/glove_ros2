@@ -20,11 +20,13 @@
 cp -r examples/ros2_glove_hand_msgs ~/ros2_ws/src/glove_hand_msgs
 cd ~/ros2_ws
 colcon build --packages-select glove_hand_msgs
+source /opt/ros/$ROS_DISTRO/setup.bash
 source install/setup.bash
 ```
 
 ## 验证
 
 ```bash
+ros2 interface packages | grep glove_hand_msgs
 ros2 interface show glove_hand_msgs/msg/HandEuler
 ```

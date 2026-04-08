@@ -16,7 +16,15 @@
 cp -r examples/ros2_glove_hand_msgs ~/ros2_ws/src/glove_hand_msgs
 cd ~/ros2_ws
 colcon build --packages-select glove_hand_msgs
+source /opt/ros/$ROS_DISTRO/setup.bash
 source install/setup.bash
+```
+
+验证消息包是否已加载：
+
+```bash
+ros2 interface packages | grep glove_hand_msgs
+ros2 interface show glove_hand_msgs/msg/HandEuler
 ```
 
 ---
@@ -62,7 +70,7 @@ c++ -std=c++17 \
 ros2 topic echo /glove/hand_euler glove_hand_msgs/msg/HandEuler
 ```
 
-如果你修改了 topic 名，请和 `glove_dds_publisher.cpp` 中一致。
+本示例原生 DDS 发布使用 `rt/glove/hand_euler`（对应 ROS2 话题 `/glove/hand_euler`），请勿去掉 `rt/` 前缀。
 
 ---
 
