@@ -19,8 +19,8 @@
 ```bash
 cp -r examples/ros2_glove_hand_msgs ~/ros2_ws/src/glove_hand_msgs
 cd ~/ros2_ws
-colcon build --packages-select glove_hand_msgs
 source /opt/ros/$ROS_DISTRO/setup.bash
+colcon build --packages-select glove_hand_msgs
 source install/setup.bash
 ```
 
