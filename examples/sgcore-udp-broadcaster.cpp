@@ -133,18 +133,18 @@ int main(int argc, char **argv)
         return 1;
     }
 
-    int sock = ::socket(AF_INET, SOCK_DGRAM, 0);
-    if (sock < 0)
+    int udp_socket = ::socket(AF_INET, SOCK_DGRAM, 0);
+    if (udp_socket < 0)
     {
         std::cerr << "Failed to create UDP socket." << std::endl;
         return 1;
     }
 
     int enableBroadcast = 1;
-    if (::setsockopt(sock, SOL_SOCKET, SO_BROADCAST, &enableBroadcast, sizeof(enableBroadcast)) < 0)
+    if (::setsockopt(udp_socket, SOL_SOCKET, SO_BROADCAST, &enableBroadcast, sizeof(enableBroadcast)) < 0)
     {
         std::cerr << "Failed to enable SO_BROADCAST." << std::endl;
-        ::close(sock);
+        ::close(udp_socket);
         return 1;
     }
 
@@ -154,7 +154,7 @@ int main(int argc, char **argv)
     if (::inet_pton(AF_INET, broadcastIp.c_str(), &dest.sin_addr) != 1)
     {
         std::cerr << "Invalid broadcast ip: " << broadcastIp << std::endl;
-        ::close(sock);
+        ::close(udp_socket);
         return 1;
     }
 
@@ -180,7 +180,7 @@ int main(int argc, char **argv)
             }
 
             const ssize_t sent = ::sendto(
-                sock,
+                udp_socket,
                 &packet,
                 sizeof(packet),
                 0,
@@ -196,6 +196,6 @@ int main(int argc, char **argv)
         std::this_thread::sleep_for(kPublishInterval);
     }
 
-    ::close(sock);
+    ::close(udp_socket);
     return 0;
 }

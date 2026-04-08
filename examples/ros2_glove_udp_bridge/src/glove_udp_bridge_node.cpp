@@ -60,8 +60,8 @@ public:
             throw std::runtime_error("Failed to create UDP socket");
         }
 
-        int reuse = 1;
-        (void)::setsockopt(socket_fd_, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(reuse));
+        int enable_reuse_addr = 1;
+        (void)::setsockopt(socket_fd_, SOL_SOCKET, SO_REUSEADDR, &enable_reuse_addr, sizeof(enable_reuse_addr));
 
         sockaddr_in addr{};
         addr.sin_family = AF_INET;
