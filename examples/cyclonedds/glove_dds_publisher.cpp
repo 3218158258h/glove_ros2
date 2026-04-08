@@ -114,8 +114,9 @@ int main()
         return 1;
     }
 
+    // ROS2 maps topic "/glove/hand_euler" to DDS topic "rt/glove/hand_euler".
     dds_entity_t topic = dds_create_topic(
-        participant, &glove_hand_msgs_msg_HandEuler_desc, "/glove/hand_euler", nullptr, nullptr);
+        participant, &glove_hand_msgs_msg_HandEuler_desc, "rt/glove/hand_euler", nullptr, nullptr);
     if (topic < 0)
     {
         std::cerr << "dds_create_topic failed: " << dds_strretcode(-topic) << std::endl;
