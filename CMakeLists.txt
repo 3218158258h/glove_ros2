@@ -23,12 +23,20 @@ endif()
 
 # 可执行文件
 add_executable(client ${CMAKE_CURRENT_SOURCE_DIR}/examples/sgcore-client.cpp)
+add_executable(udp_broadcaster ${CMAKE_CURRENT_SOURCE_DIR}/examples/sgcore-udp-broadcaster.cpp)
 
 # 链接时也指定 -stdlib=libc++
 target_link_libraries(client 
     ${SGCORE_LIB} 
     ${SGCONNECT_LIB}
     -lc++ 
+    -lc++abi
+)
+
+target_link_libraries(udp_broadcaster
+    ${SGCORE_LIB}
+    ${SGCONNECT_LIB}
+    -lc++
     -lc++abi
 )
 
