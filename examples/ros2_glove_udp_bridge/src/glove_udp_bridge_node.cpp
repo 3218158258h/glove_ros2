@@ -99,6 +99,8 @@ public:
     }
 
 private:
+    // Maps [finger(0..4), joint_index(0..2)] to the anatomical joint enum used by FingerJointEuler.
+    // Thumb(0): CMC/MCP/IP, other fingers: MCP/PIP/DIP.
     static uint8_t JointCode(uint8_t finger, uint8_t joint_index)
     {
         using glove_hand_msgs::msg::FingerJointEuler;

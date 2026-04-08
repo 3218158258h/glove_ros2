@@ -24,7 +24,7 @@ using namespace SGCore;
 using namespace SGCore::Kinematics;
 
 static std::atomic<bool> g_stop{false};
-static constexpr std::chrono::milliseconds kPublishInterval{15};
+static constexpr std::chrono::milliseconds publishInterval{15};
 
 #pragma pack(push, 1)
 struct JointEulerPacket
@@ -101,7 +101,7 @@ static bool BuildPacketFromPose(const HandPose &pose, HandAnglesUdpPacket &outPa
 
 int main(int argc, char **argv)
 {
-    const std::string broadcastIp = (argc > 1) ? argv[1] : "255.255.255.255";
+    const std::string broadcastIP = (argc > 1) ? argv[1] : "255.255.255.255";
     int port = 9000;
     if (argc > 2)
     {
@@ -125,7 +125,7 @@ int main(int argc, char **argv)
     signal(SIGTERM, SignalHandler);
 
     std::cout << "SGCore version: " << Library::Version() << std::endl;
-    std::cout << "UDP broadcast target: " << broadcastIp << ":" << port << std::endl;
+    std::cout << "UDP broadcast target: " << broadcastIP << ":" << port << std::endl;
 
     if (!EnsureSenseCom())
     {
@@ -151,9 +151,9 @@ int main(int argc, char **argv)
     sockaddr_in dest{};
     dest.sin_family = AF_INET;
     dest.sin_port = htons(static_cast<uint16_t>(port));
-    if (::inet_pton(AF_INET, broadcastIp.c_str(), &dest.sin_addr) != 1)
+    if (::inet_pton(AF_INET, broadcastIP.c_str(), &dest.sin_addr) != 1)
     {
-        std::cerr << "Invalid broadcast ip: " << broadcastIp << std::endl;
+        std::cerr << "Invalid broadcast ip: " << broadcastIP << std::endl;
         ::close(udpSocket);
         return 1;
     }
@@ -193,7 +193,7 @@ int main(int argc, char **argv)
             }
         }
 
-        std::this_thread::sleep_for(kPublishInterval);
+        std::this_thread::sleep_for(publishInterval);
     }
 
     ::close(udpSocket);
