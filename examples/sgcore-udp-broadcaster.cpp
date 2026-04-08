@@ -160,15 +160,15 @@ int main(int argc, char **argv)
 
     while (!g_stop.load())
     {
-        for (bool rightHand : {true, false})
+        for (bool isRightHand : {true, false})
         {
-            if (!HandLayer::DeviceConnected(rightHand))
+            if (!HandLayer::DeviceConnected(isRightHand))
             {
                 continue;
             }
 
             HandPose pose;
-            if (!HandLayer::GetHandPose(rightHand, pose))
+            if (!HandLayer::GetHandPose(isRightHand, pose))
             {
                 continue;
             }

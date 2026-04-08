@@ -61,7 +61,10 @@ public:
         }
 
         int enable_reuse_addr = 1;
-        (void)::setsockopt(socket_fd_, SOL_SOCKET, SO_REUSEADDR, &enable_reuse_addr, sizeof(enable_reuse_addr));
+        if (::setsockopt(socket_fd_, SOL_SOCKET, SO_REUSEADDR, &enable_reuse_addr, sizeof(enable_reuse_addr)) < 0)
+        {
+            RCLCPP_WARN(get_logger(), "Failed to set SO_REUSEADDR.");
+        }
 
         sockaddr_in addr{};
         addr.sin_family = AF_INET;
