@@ -199,7 +199,6 @@ private:
         }
     }
 
-private:
     std::string bind_address_;
     int udp_port_;
     std::string right_topic_;

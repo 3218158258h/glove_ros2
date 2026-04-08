@@ -4,6 +4,7 @@
 #include <csignal>
 #include <cstdint>
 #include <cstring>
+#include <exception>
 #include <iostream>
 #include <string>
 #include <thread>
@@ -101,7 +102,24 @@ static bool BuildPacketFromPose(const HandPose &pose, HandAnglesUdpPacket &outPa
 int main(int argc, char **argv)
 {
     const std::string broadcastIp = (argc > 1) ? argv[1] : "255.255.255.255";
-    const int port = (argc > 2) ? std::stoi(argv[2]) : 9000;
+    int port = 9000;
+    if (argc > 2)
+    {
+        try
+        {
+            port = std::stoi(argv[2]);
+        }
+        catch (const std::exception &)
+        {
+            std::cerr << "Invalid port argument: " << argv[2] << std::endl;
+            return 1;
+        }
+    }
+    if (port < 1 || port > 65535)
+    {
+        std::cerr << "Port out of range [1, 65535]: " << port << std::endl;
+        return 1;
+    }
 
     signal(SIGINT, SignalHandler);
     signal(SIGTERM, SignalHandler);
