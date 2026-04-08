@@ -60,8 +60,8 @@ public:
             throw std::runtime_error("Failed to create UDP socket");
         }
 
-        int enable_reuse_addr = 1;
-        if (::setsockopt(socket_fd_, SOL_SOCKET, SO_REUSEADDR, &enable_reuse_addr, sizeof(enable_reuse_addr)) < 0)
+        int enableReuseAddr = 1;
+        if (::setsockopt(socket_fd_, SOL_SOCKET, SO_REUSEADDR, &enableReuseAddr, sizeof(enableReuseAddr)) < 0)
         {
             RCLCPP_WARN(get_logger(), "Failed to set SO_REUSEADDR.");
         }
