@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <array>
 #include <atomic>
 #include <chrono>
@@ -80,6 +81,8 @@ static const char *JointNameForFinger(uint8_t fingerIndex, uint8_t jointIndex)
 
 static std::string BuildCompactEulerText(const glove_hand_msgs_msg_dds__HandEuler_ &msg)
 {
+    const uint8_t validCount = static_cast<uint8_t>(std::min<size_t>(msg.valid_joint_count, kMaxJointCount));
+
     std::ostringstream out;
     out << std::fixed << std::setprecision(3);
     for (uint8_t finger = 0; finger < kFingerCount; ++finger)
@@ -91,13 +94,18 @@ static std::string BuildCompactEulerText(const glove_hand_msgs_msg_dds__HandEule
         out << kFingerNames[finger] << ":";
         for (uint8_t jointIndex = 0; jointIndex < kJointsPerFinger; ++jointIndex)
         {
-            const size_t flatIndex = static_cast<size_t>(finger) * kJointsPerFinger + jointIndex;
             out << ' ' << JointNameForFinger(finger, jointIndex) << ':';
-            if (flatIndex < msg.valid_joint_count && flatIndex < kMaxJointCount)
+            bool found = false;
+            for (uint8_t i = 0; i < validCount; ++i)
             {
-                out << msg.roll[flatIndex] << ',' << msg.pitch[flatIndex] << ',' << msg.yaw[flatIndex];
+                if (msg.finger[i] == finger && msg.joint_index[i] == jointIndex)
+                {
+                    out << msg.roll[i] << ',' << msg.pitch[i] << ',' << msg.yaw[i];
+                    found = true;
+                    break;
+                }
             }
-            else
+            if (!found)
             {
                 out << kDefaultEulerValue << ',' << kDefaultEulerValue << ',' << kDefaultEulerValue;
             }
