@@ -13,7 +13,6 @@
 #include <unistd.h>
 
 #include <rclcpp/rclcpp.hpp>
-#include <glove_hand_msgs/msg/finger_joint_euler.hpp>
 #include <glove_hand_msgs/msg/hand_euler.hpp>
 
 #pragma pack(push, 1)
@@ -99,25 +98,25 @@ public:
     }
 
 private:
-    // Maps [finger(0..4), joint_index(0..2)] to the anatomical joint enum used by FingerJointEuler.
+    // Maps [finger(0..4), joint_index(0..2)] to anatomical joint enum.
     // Thumb(0): CMC/MCP/IP, other fingers: MCP/PIP/DIP.
     static uint8_t JointCode(uint8_t finger, uint8_t joint_index)
     {
-        using glove_hand_msgs::msg::FingerJointEuler;
-        if (finger == FingerJointEuler::THUMB)
+        using glove_hand_msgs::msg::HandEuler;
+        if (finger == HandEuler::THUMB)
         {
             static const std::array<uint8_t, 3> thumb_map = {
-                FingerJointEuler::CMC,
-                FingerJointEuler::MCP,
-                FingerJointEuler::IP};
-            return (joint_index < thumb_map.size()) ? thumb_map[joint_index] : FingerJointEuler::UNKNOWN;
+                HandEuler::CMC,
+                HandEuler::MCP,
+                HandEuler::IP};
+            return (joint_index < thumb_map.size()) ? thumb_map[joint_index] : HandEuler::UNKNOWN;
         }
 
         static const std::array<uint8_t, 3> finger_map = {
-            FingerJointEuler::MCP,
-            FingerJointEuler::PIP,
-            FingerJointEuler::DIP};
-        return (joint_index < finger_map.size()) ? finger_map[joint_index] : FingerJointEuler::UNKNOWN;
+            HandEuler::MCP,
+            HandEuler::PIP,
+            HandEuler::DIP};
+        return (joint_index < finger_map.size()) ? finger_map[joint_index] : HandEuler::UNKNOWN;
     }
 
     static glove_hand_msgs::msg::HandEuler ToRosMessage(const HandAnglesUdpPacket &packet)
@@ -130,27 +129,26 @@ private:
         const uint8_t valid_count = std::min<uint8_t>(packet.valid_joint_count, 15);
         msg.valid_joint_count = valid_count;
 
-        for (size_t i = 0; i < msg.joints.size(); ++i)
+        for (size_t i = 0; i < msg.roll.size(); ++i)
         {
-            auto &j = msg.joints[i];
             const uint8_t finger = static_cast<uint8_t>(i / 3);
             const uint8_t joint_index = static_cast<uint8_t>(i % 3);
 
-            j.finger = finger;
-            j.joint_index = joint_index;
-            j.joint = JointCode(finger, joint_index);
+            msg.finger[i] = finger;
+            msg.joint_index[i] = joint_index;
+            msg.joint[i] = JointCode(finger, joint_index);
 
             if (i < valid_count)
             {
-                j.roll = packet.joints[i].roll;
-                j.pitch = packet.joints[i].pitch;
-                j.yaw = packet.joints[i].yaw;
+                msg.roll[i] = packet.joints[i].roll;
+                msg.pitch[i] = packet.joints[i].pitch;
+                msg.yaw[i] = packet.joints[i].yaw;
             }
             else
             {
-                j.roll = 0.0f;
-                j.pitch = 0.0f;
-                j.yaw = 0.0f;
+                msg.roll[i] = 0.0f;
+                msg.pitch[i] = 0.0f;
+                msg.yaw[i] = 0.0f;
             }
         }
         return msg;

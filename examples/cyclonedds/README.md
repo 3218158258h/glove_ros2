@@ -67,10 +67,12 @@ c++ -std=c++17 \
 在 ROS2 环境（已 source `install/setup.bash`）中：
 
 ```bash
-ros2 topic echo /glove/hand_euler glove_hand_msgs/msg/HandEuler
+ros2 topic echo /glove/right/hand_euler glove_hand_msgs/msg/HandEuler
+ros2 topic echo /glove/left/hand_euler glove_hand_msgs/msg/HandEuler
 ```
 
-本示例原生 DDS 发布使用 `rt/glove/hand_euler`（对应 ROS2 话题 `/glove/hand_euler`），请勿去掉 `rt/` 前缀。
+本示例原生 DDS 发布使用 `rt/glove/right/hand_euler` 与 `rt/glove/left/hand_euler`
+（对应 ROS2 话题 `/glove/right/hand_euler` 与 `/glove/left/hand_euler`），请勿去掉 `rt/` 前缀。
 
 ---
 

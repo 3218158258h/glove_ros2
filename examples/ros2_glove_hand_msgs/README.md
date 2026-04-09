@@ -4,8 +4,7 @@
 
 用于导入到 ROS2 工作空间的自定义消息包，定义了手套欧拉角关节数据：
 
-- `FingerJointEuler.msg`
-- `HandEuler.msg`
+- `HandEuler.msg`（单一最终消息）
 
 关节命名采用通用解剖名：
 
