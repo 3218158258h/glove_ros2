@@ -64,12 +64,10 @@ CMAKE_BINARY_DIR = /home/runner/work/glove_ros2/glove_ros2/build
 
 # The main recursive "all" target.
 all: CMakeFiles/client.dir/all
-all: CMakeFiles/udp_broadcaster.dir/all
 .PHONY : all
 
 # The main recursive "codegen" target.
 codegen: CMakeFiles/client.dir/codegen
-codegen: CMakeFiles/udp_broadcaster.dir/codegen
 .PHONY : codegen
 
 # The main recursive "preinstall" target.
@@ -78,7 +76,6 @@ preinstall:
 
 # The main recursive "clean" target.
 clean: CMakeFiles/client.dir/clean
-clean: CMakeFiles/udp_broadcaster.dir/clean
 .PHONY : clean
 
 #=============================================================================
@@ -112,38 +109,6 @@ CMakeFiles/client.dir/codegen:
 CMakeFiles/client.dir/clean:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/client.dir/build.make CMakeFiles/client.dir/clean
 .PHONY : CMakeFiles/client.dir/clean
-
-#=============================================================================
-# Target rules for target CMakeFiles/udp_broadcaster.dir
-
-# All Build rule for target.
-CMakeFiles/udp_broadcaster.dir/all:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/udp_broadcaster.dir/build.make CMakeFiles/udp_broadcaster.dir/depend
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/udp_broadcaster.dir/build.make CMakeFiles/udp_broadcaster.dir/build
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/home/runner/work/glove_ros2/glove_ros2/build/CMakeFiles --progress-num=3,4 "Built target udp_broadcaster"
-.PHONY : CMakeFiles/udp_broadcaster.dir/all
-
-# Build rule for subdir invocation for target.
-CMakeFiles/udp_broadcaster.dir/rule: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/runner/work/glove_ros2/glove_ros2/build/CMakeFiles 2
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 CMakeFiles/udp_broadcaster.dir/all
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/runner/work/glove_ros2/glove_ros2/build/CMakeFiles 0
-.PHONY : CMakeFiles/udp_broadcaster.dir/rule
-
-# Convenience name for target.
-udp_broadcaster: CMakeFiles/udp_broadcaster.dir/rule
-.PHONY : udp_broadcaster
-
-# codegen rule for target.
-CMakeFiles/udp_broadcaster.dir/codegen:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/udp_broadcaster.dir/build.make CMakeFiles/udp_broadcaster.dir/codegen
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/home/runner/work/glove_ros2/glove_ros2/build/CMakeFiles --progress-num=3,4 "Finished codegen for target udp_broadcaster"
-.PHONY : CMakeFiles/udp_broadcaster.dir/codegen
-
-# clean rule for target.
-CMakeFiles/udp_broadcaster.dir/clean:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/udp_broadcaster.dir/build.make CMakeFiles/udp_broadcaster.dir/clean
-.PHONY : CMakeFiles/udp_broadcaster.dir/clean
 
 #=============================================================================
 # Special targets to cleanup operation of make.
