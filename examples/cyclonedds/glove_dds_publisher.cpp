@@ -8,7 +8,6 @@
 #include <iostream>
 #include <sstream>
 #include <thread>
-#include <vector>
 
 #include <dds/dds.h>
 
@@ -158,9 +157,7 @@ int main()
 
             std::string compactText = BuildCompactEulerText(pose);
             glove_hand_msgs_msg_dds__HandEuler_ msg{};
-            std::vector<char> eulerTextBuffer(compactText.begin(), compactText.end());
-            eulerTextBuffer.push_back('\0');
-            msg.euler_text = eulerTextBuffer.data();
+            msg.euler_text = const_cast<char *>(compactText.c_str());
 
             const dds_entity_t writer = rightHand ? right_writer : left_writer;
             dds_return_t rc = dds_write(writer, &msg);
