@@ -6,6 +6,7 @@
 #include <cstdint>
 #include <iomanip>
 #include <iostream>
+#include <memory>
 #include <sstream>
 #include <thread>
 
@@ -157,11 +158,13 @@ int main()
 
             std::string compactText = BuildCompactEulerText(pose);
             glove_hand_msgs_msg_dds__HandEuler_ msg{};
-            msg.euler_text = dds_string_dup(compactText.c_str());
+            auto eulerText = std::unique_ptr<char, decltype(&dds_free)>(
+                dds_string_dup(compactText.c_str()),
+                dds_free);
+            msg.euler_text = eulerText.get();
 
             const dds_entity_t writer = rightHand ? right_writer : left_writer;
             dds_return_t rc = dds_write(writer, &msg);
-            dds_free(msg.euler_text);
             if (rc != DDS_RETCODE_OK)
             {
                 std::cerr << "dds_write failed: " << dds_strretcode(-rc) << std::endl;
