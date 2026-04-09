@@ -83,7 +83,7 @@ static void PrintVect3Section(const char *sectionName, const std::vector<std::ve
             }
             std::cout << JointNameForFinger(fingerIndex, jointIndex)
                       << " (关节" << jointIndex << ")"
-                      << " [roll, pitch, yaw]="
+                      << " [euler_x, euler_y, euler_z]="
                       << FormatVect3(fingerData[jointIndex]);
         }
         std::cout << std::endl;
