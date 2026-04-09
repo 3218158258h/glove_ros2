@@ -10,7 +10,6 @@
 
 #include <SenseGlove/Core/HandLayer.hpp>
 #include <SenseGlove/Core/HandPose.hpp>
-#include <SenseGlove/Core/Library.hpp>
 #include <SenseGlove/Core/SenseCom.hpp>
 #include <SenseGlove/Core/Vect3D.hpp>
 
@@ -62,7 +61,7 @@ static bool EnsureSenseCom()
     return SenseCom::StartupSenseCom();
 }
 
-static void FillHandEulerMessage(const HandPose &pose, glove_hand_msgs_msg_HandEuler &outMsg)
+static void FillHandEulerMessage(const HandPose &pose, glove_hand_msgs_msg_dds__HandEuler_ &outMsg)
 {
     const auto now = std::chrono::system_clock::now().time_since_epoch();
     const auto sec = std::chrono::duration_cast<std::chrono::seconds>(now);
@@ -81,13 +80,12 @@ static void FillHandEulerMessage(const HandPose &pose, glove_hand_msgs_msg_HandE
         for (size_t jointIndex = 0; jointIndex < angles[fingerIndex].size() && outIndex < 15; ++jointIndex)
         {
             const Vect3D &e = angles[fingerIndex][jointIndex];
-            auto &j = outMsg.joints[outIndex];
-            j.finger = static_cast<uint8_t>(fingerIndex);
-            j.joint_index = static_cast<uint8_t>(jointIndex);
-            j.joint = ToJointCode(fingerIndex, jointIndex);
-            j.roll = e.GetX();
-            j.pitch = e.GetY();
-            j.yaw = e.GetZ();
+            outMsg.finger[outIndex] = static_cast<uint8_t>(fingerIndex);
+            outMsg.joint_index[outIndex] = static_cast<uint8_t>(jointIndex);
+            outMsg.joint[outIndex] = ToJointCode(fingerIndex, jointIndex);
+            outMsg.roll[outIndex] = e.GetX();
+            outMsg.pitch[outIndex] = e.GetY();
+            outMsg.yaw[outIndex] = e.GetZ();
             ++outIndex;
         }
     }
@@ -100,7 +98,6 @@ int main()
     signal(SIGINT, SignalHandler);
     signal(SIGTERM, SignalHandler);
 
-    std::cout << "SGCore version: " << Library::Version() << std::endl;
     if (!EnsureSenseCom())
     {
         std::cerr << "Failed to start SenseCom." << std::endl;
@@ -114,20 +111,36 @@ int main()
         return 1;
     }
 
-    // ROS2 maps topic "/glove/hand_euler" to DDS topic "rt/glove/hand_euler".
-    dds_entity_t topic = dds_create_topic(
-        participant, &glove_hand_msgs_msg_HandEuler_desc, "rt/glove/hand_euler", nullptr, nullptr);
-    if (topic < 0)
+    dds_entity_t right_topic = dds_create_topic(
+        participant, &glove_hand_msgs_msg_dds__HandEuler__desc, "rt/glove/right/hand_euler", nullptr, nullptr);
+    if (right_topic < 0)
     {
-        std::cerr << "dds_create_topic failed: " << dds_strretcode(-topic) << std::endl;
+        std::cerr << "dds_create_topic(right) failed: " << dds_strretcode(-right_topic) << std::endl;
         dds_delete(participant);
         return 1;
     }
 
-    dds_entity_t writer = dds_create_writer(participant, topic, nullptr, nullptr);
-    if (writer < 0)
+    dds_entity_t left_topic = dds_create_topic(
+        participant, &glove_hand_msgs_msg_dds__HandEuler__desc, "rt/glove/left/hand_euler", nullptr, nullptr);
+    if (left_topic < 0)
     {
-        std::cerr << "dds_create_writer failed: " << dds_strretcode(-writer) << std::endl;
+        std::cerr << "dds_create_topic(left) failed: " << dds_strretcode(-left_topic) << std::endl;
+        dds_delete(participant);
+        return 1;
+    }
+
+    dds_entity_t right_writer = dds_create_writer(participant, right_topic, nullptr, nullptr);
+    if (right_writer < 0)
+    {
+        std::cerr << "dds_create_writer(right) failed: " << dds_strretcode(-right_writer) << std::endl;
+        dds_delete(participant);
+        return 1;
+    }
+
+    dds_entity_t left_writer = dds_create_writer(participant, left_topic, nullptr, nullptr);
+    if (left_writer < 0)
+    {
+        std::cerr << "dds_create_writer(left) failed: " << dds_strretcode(-left_writer) << std::endl;
         dds_delete(participant);
         return 1;
     }
@@ -147,9 +160,10 @@ int main()
                 continue;
             }
 
-            glove_hand_msgs_msg_HandEuler msg{};
+            glove_hand_msgs_msg_dds__HandEuler_ msg{};
             FillHandEulerMessage(pose, msg);
 
+            const dds_entity_t writer = rightHand ? right_writer : left_writer;
             dds_return_t rc = dds_write(writer, &msg);
             if (rc != DDS_RETCODE_OK)
             {

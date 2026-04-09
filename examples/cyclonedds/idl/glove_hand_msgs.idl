@@ -1,22 +1,20 @@
 module glove_hand_msgs {
   module msg {
+    module dds_ {
 
-    struct FingerJointEuler {
-      uint8 finger;
-      uint8 joint_index;
-      uint8 joint;
-      float roll;
-      float pitch;
-      float yaw;
-    };
-
-    struct HandEuler {
+    struct HandEuler_ {
       long long stamp_sec;
       unsigned long stamp_nanosec;
       boolean is_right_hand;
       uint8 valid_joint_count;
-      FingerJointEuler joints[15];
+      uint8 finger[15];
+      uint8 joint_index[15];
+      uint8 joint[15];
+      float roll[15];
+      float pitch[15];
+      float yaw[15];
     };
 
+    };
   };
 };
