@@ -129,19 +129,6 @@ client/fast:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/client.dir/build.make CMakeFiles/client.dir/build
 .PHONY : client/fast
 
-#=============================================================================
-# Target rules for targets named udp_broadcaster
-
-# Build rule for target.
-udp_broadcaster: cmake_check_build_system
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 udp_broadcaster
-.PHONY : udp_broadcaster
-
-# fast build rule for target.
-udp_broadcaster/fast:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/udp_broadcaster.dir/build.make CMakeFiles/udp_broadcaster.dir/build
-.PHONY : udp_broadcaster/fast
-
 examples/sgcore-client.o: examples/sgcore-client.cpp.o
 .PHONY : examples/sgcore-client.o
 
@@ -166,30 +153,6 @@ examples/sgcore-client.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/client.dir/build.make CMakeFiles/client.dir/examples/sgcore-client.cpp.s
 .PHONY : examples/sgcore-client.cpp.s
 
-examples/sgcore-udp-broadcaster.o: examples/sgcore-udp-broadcaster.cpp.o
-.PHONY : examples/sgcore-udp-broadcaster.o
-
-# target to build an object file
-examples/sgcore-udp-broadcaster.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/udp_broadcaster.dir/build.make CMakeFiles/udp_broadcaster.dir/examples/sgcore-udp-broadcaster.cpp.o
-.PHONY : examples/sgcore-udp-broadcaster.cpp.o
-
-examples/sgcore-udp-broadcaster.i: examples/sgcore-udp-broadcaster.cpp.i
-.PHONY : examples/sgcore-udp-broadcaster.i
-
-# target to preprocess a source file
-examples/sgcore-udp-broadcaster.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/udp_broadcaster.dir/build.make CMakeFiles/udp_broadcaster.dir/examples/sgcore-udp-broadcaster.cpp.i
-.PHONY : examples/sgcore-udp-broadcaster.cpp.i
-
-examples/sgcore-udp-broadcaster.s: examples/sgcore-udp-broadcaster.cpp.s
-.PHONY : examples/sgcore-udp-broadcaster.s
-
-# target to generate assembly for a file
-examples/sgcore-udp-broadcaster.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/udp_broadcaster.dir/build.make CMakeFiles/udp_broadcaster.dir/examples/sgcore-udp-broadcaster.cpp.s
-.PHONY : examples/sgcore-udp-broadcaster.cpp.s
-
 # Help Target
 help:
 	@echo "The following are some of the valid targets for this Makefile:"
@@ -199,13 +162,9 @@ help:
 	@echo "... edit_cache"
 	@echo "... rebuild_cache"
 	@echo "... client"
-	@echo "... udp_broadcaster"
 	@echo "... examples/sgcore-client.o"
 	@echo "... examples/sgcore-client.i"
 	@echo "... examples/sgcore-client.s"
-	@echo "... examples/sgcore-udp-broadcaster.o"
-	@echo "... examples/sgcore-udp-broadcaster.i"
-	@echo "... examples/sgcore-udp-broadcaster.s"
 .PHONY : help
 
 
