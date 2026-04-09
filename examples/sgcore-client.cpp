@@ -40,14 +40,6 @@ static std::string FormatVect3(const Vect3D &v)
     return oss.str();
 }
 
-static std::string FormatQuat(const Quat &q)
-{
-    std::ostringstream oss;
-    oss << std::fixed << std::setprecision(3)
-        << q.GetX() << ", " << q.GetY() << ", " << q.GetZ() << ", " << q.GetW();
-    return oss.str();
-}
-
 static const char *FingerNameOrUnknown(size_t fingerIndex)
 {
     return (fingerIndex < kFingerNames.size()) ? kFingerNames[fingerIndex] : "Unknown";
@@ -82,32 +74,19 @@ static void PrintVect3Section(const char *sectionName, const std::vector<std::ve
     {
         const auto &fingerData = data[fingerIndex];
         const char *fingerName = FingerNameOrUnknown(fingerIndex);
-        std::cout << "    [" << fingerName << "]" << std::endl;
+        std::cout << "    " << fingerName << ": ";
         for (size_t jointIndex = 0; jointIndex < fingerData.size(); ++jointIndex)
         {
-            std::cout << "      " << JointNameForFinger(fingerIndex, jointIndex)
+            if (jointIndex > 0)
+            {
+                std::cout << " | ";
+            }
+            std::cout << JointNameForFinger(fingerIndex, jointIndex)
                       << " (关节" << jointIndex << ")"
-                      << ": " << FormatVect3(fingerData[jointIndex])
-                      << std::endl;
+                      << " [roll, pitch, yaw]="
+                      << FormatVect3(fingerData[jointIndex]);
         }
-    }
-}
-
-static void PrintQuatSection(const char *sectionName, const std::vector<std::vector<Quat>> &data)
-{
-    std::cout << "  [" << sectionName << "]" << std::endl;
-    for (size_t fingerIndex = 0; fingerIndex < data.size(); ++fingerIndex)
-    {
-        const auto &fingerData = data[fingerIndex];
-        const char *fingerName = FingerNameOrUnknown(fingerIndex);
-        std::cout << "    [" << fingerName << "]" << std::endl;
-        for (size_t jointIndex = 0; jointIndex < fingerData.size(); ++jointIndex)
-        {
-            std::cout << "      " << JointNameForFinger(fingerIndex, jointIndex)
-                      << " (关节" << jointIndex << ")"
-                      << ": " << FormatQuat(fingerData[jointIndex])
-                      << std::endl;
-        }
+        std::cout << std::endl;
     }
 }
 
@@ -185,22 +164,7 @@ static void GetHandPose(bool rightHand)
     if (HandLayer::GetHandPose(rightHand, handPose))
     {
         std::cout << "成功获取" << hand << "的姿态数据：" << std::endl;
-        const auto &jointPositions = handPose.GetJointPositions();
-        const auto &jointRotations = handPose.GetJointRotations();
         const auto &handAngles = handPose.GetHandAngles();
-
-        if (jointPositions.size() != jointRotations.size() || jointPositions.size() != handAngles.size())
-        {
-            std::cout << "警告：手指维度数据长度不一致，不做跨类型截断。" << std::endl;
-            std::cout << "      Position/Rotation/Angle 将分别按各自长度输出。"
-                      << " (positions=" << jointPositions.size()
-                      << ", rotations=" << jointRotations.size()
-                      << ", angles=" << handAngles.size() << ")"
-                      << std::endl;
-        }
-
-        PrintVect3Section("Position", jointPositions);
-        PrintQuatSection("Rotation", jointRotations);
         PrintVect3Section("Angle", handAngles);
         std::cout << std::endl;
     }
