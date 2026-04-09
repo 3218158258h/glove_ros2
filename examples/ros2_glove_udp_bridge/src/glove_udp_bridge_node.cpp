@@ -3,6 +3,8 @@
 #include <atomic>
 #include <cstdint>
 #include <cstring>
+#include <iomanip>
+#include <sstream>
 #include <stdexcept>
 #include <string>
 #include <thread>
@@ -98,59 +100,56 @@ public:
     }
 
 private:
-    // Maps [finger(0..4), joint_index(0..2)] to anatomical joint enum.
-    // Thumb(0): CMC/MCP/IP, other fingers: MCP/PIP/DIP.
-    static uint8_t JointCode(uint8_t finger, uint8_t joint_index)
+    static std::string BuildCompactEulerText(const HandAnglesUdpPacket &packet)
     {
-        using glove_hand_msgs::msg::HandEuler;
-        if (finger == HandEuler::THUMB)
-        {
-            static const std::array<uint8_t, 3> thumb_map = {
-                HandEuler::CMC,
-                HandEuler::MCP,
-                HandEuler::IP};
-            return (joint_index < thumb_map.size()) ? thumb_map[joint_index] : HandEuler::UNKNOWN;
-        }
+        static const std::array<const char *, 5> kFingerNames = {
+            "Thumb", "Index", "Middle", "Ring", "Pinky"};
+        static const std::array<const char *, 3> kThumbJoints = {
+            "CMC", "MCP", "IP"};
+        static const std::array<const char *, 3> kFingerJoints = {
+            "MCP", "PIP", "DIP"};
 
-        static const std::array<uint8_t, 3> finger_map = {
-            HandEuler::MCP,
-            HandEuler::PIP,
-            HandEuler::DIP};
-        return (joint_index < finger_map.size()) ? finger_map[joint_index] : HandEuler::UNKNOWN;
+        const uint8_t valid_count = std::min<uint8_t>(packet.valid_joint_count, 15);
+        std::ostringstream out;
+        out << std::fixed << std::setprecision(3);
+
+        for (size_t finger = 0; finger < kFingerNames.size(); ++finger)
+        {
+            if (finger > 0)
+            {
+                out << '\n';
+            }
+            out << kFingerNames[finger] << ": ";
+
+            for (size_t joint_index = 0; joint_index < 3; ++joint_index)
+            {
+                if (joint_index > 0)
+                {
+                    out << "   ";
+                }
+                const auto &joint_names = (finger == 0) ? kThumbJoints : kFingerJoints;
+                out << joint_names[joint_index] << ":";
+
+                const size_t flat_index = (finger * 3) + joint_index;
+                if (flat_index < valid_count)
+                {
+                    out << packet.joints[flat_index].roll
+                        << "," << packet.joints[flat_index].pitch
+                        << "," << packet.joints[flat_index].yaw;
+                }
+                else
+                {
+                    out << "0.000,0.000,0.000";
+                }
+            }
+        }
+        return out.str();
     }
 
     static glove_hand_msgs::msg::HandEuler ToRosMessage(const HandAnglesUdpPacket &packet)
     {
         glove_hand_msgs::msg::HandEuler msg;
-        msg.stamp_sec = packet.stamp_sec;
-        msg.stamp_nanosec = packet.stamp_nanosec;
-        msg.is_right_hand = (packet.is_right_hand != 0);
-
-        const uint8_t valid_count = std::min<uint8_t>(packet.valid_joint_count, 15);
-        msg.valid_joint_count = valid_count;
-
-        for (size_t i = 0; i < msg.roll.size(); ++i)
-        {
-            const uint8_t finger = static_cast<uint8_t>(i / 3);
-            const uint8_t joint_index = static_cast<uint8_t>(i % 3);
-
-            msg.finger[i] = finger;
-            msg.joint_index[i] = joint_index;
-            msg.joint[i] = JointCode(finger, joint_index);
-
-            if (i < valid_count)
-            {
-                msg.roll[i] = packet.joints[i].roll;
-                msg.pitch[i] = packet.joints[i].pitch;
-                msg.yaw[i] = packet.joints[i].yaw;
-            }
-            else
-            {
-                msg.roll[i] = 0.0f;
-                msg.pitch[i] = 0.0f;
-                msg.yaw[i] = 0.0f;
-            }
-        }
+        msg.euler_text = BuildCompactEulerText(packet);
         return msg;
     }
 
@@ -191,7 +190,7 @@ private:
             }
 
             auto msg = ToRosMessage(packet);
-            if (msg.is_right_hand)
+            if (packet.is_right_hand != 0)
             {
                 right_pub_->publish(msg);
             }

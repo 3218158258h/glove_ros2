@@ -1,4 +1,3 @@
-#include <algorithm>
 #include <array>
 #include <atomic>
 #include <chrono>
@@ -26,16 +25,6 @@ using namespace SGCore::Kinematics;
 static std::atomic<bool> g_stop{false};
 static constexpr std::chrono::milliseconds kPublishInterval{15}; // ~66.7 Hz
 
-enum JointCode : uint8_t
-{
-    CMC = 0,
-    MCP = 1,
-    PIP = 2,
-    DIP = 3,
-    IP = 4,
-    UNKNOWN = 255,
-};
-
 static const std::array<const char *, 5> kFingerNames = {
     "Thumb", "Index", "Middle", "Ring", "Pinky"};
 
@@ -49,74 +38,6 @@ static float QuantizeTo3Decimals(float value)
     return std::round(value * 1000.0f) / 1000.0f;
 }
 
-static const char *FingerNameOrUnknown(uint8_t fingerIndex)
-{
-    return (fingerIndex < kFingerNames.size()) ? kFingerNames[fingerIndex] : "Unknown";
-}
-
-static const char *JointNameForFinger(uint8_t fingerIndex, uint8_t jointIndex)
-{
-    static const std::array<const char *, 3> kThumbJointNames = {"CMC", "MCP", "IP"};
-    static const std::array<const char *, 3> kFingerJointNames = {"MCP", "PIP", "DIP"};
-    if (fingerIndex == 0)
-    {
-        return (jointIndex < kThumbJointNames.size()) ? kThumbJointNames[jointIndex] : "UnknownJoint";
-    }
-    return (jointIndex < kFingerJointNames.size()) ? kFingerJointNames[jointIndex] : "UnknownJoint";
-}
-
-static void PrintAngleMessageByFinger(const glove_hand_msgs_msg_dds__HandEuler_ &msg)
-{
-    const uint8_t validCount = std::min<uint8_t>(msg.valid_joint_count, 15);
-    std::cout << (msg.is_right_hand ? "[Right]" : "[Left]") << " Angle" << std::endl;
-    for (uint8_t finger = 0; finger < 5; ++finger)
-    {
-        std::ostringstream line;
-        line << std::fixed << std::setprecision(3);
-        line << "  " << FingerNameOrUnknown(finger) << ": ";
-
-        bool printedAnyJoint = false;
-        for (uint8_t i = 0; i < validCount; ++i)
-        {
-            if (msg.finger[i] != finger)
-            {
-                continue;
-            }
-            if (printedAnyJoint)
-            {
-                line << " | ";
-            }
-
-            line << JointNameForFinger(finger, msg.joint_index[i])
-                 << " (关节" << static_cast<int>(msg.joint_index[i]) << ")"
-                 << " [euler_x, euler_y, euler_z]="
-                 << msg.roll[i] << ", " << msg.pitch[i] << ", " << msg.yaw[i];
-            printedAnyJoint = true;
-        }
-
-        if (!printedAnyJoint)
-        {
-            line << "(no data)";
-        }
-        std::cout << line.str() << std::endl;
-    }
-    std::cout << std::endl;
-}
-
-static uint8_t ToJointCode(size_t fingerIndex, size_t jointIndex)
-{
-    if (fingerIndex == 0)
-    {
-        // Thumb: CMC -> MCP -> IP
-        static const std::array<uint8_t, 3> thumbMap = {CMC, MCP, IP};
-        return (jointIndex < thumbMap.size()) ? thumbMap[jointIndex] : UNKNOWN;
-    }
-
-    // Other fingers: MCP -> PIP -> DIP
-    static const std::array<uint8_t, 3> fingerMap = {MCP, PIP, DIP};
-    return (jointIndex < fingerMap.size()) ? fingerMap[jointIndex] : UNKNOWN;
-}
-
 static bool EnsureSenseCom()
 {
     if (SenseCom::ScanningActive())
@@ -127,36 +48,44 @@ static bool EnsureSenseCom()
     return SenseCom::StartupSenseCom();
 }
 
-static void FillHandEulerMessage(const HandPose &pose, glove_hand_msgs_msg_dds__HandEuler_ &outMsg)
+static std::string BuildCompactEulerText(const HandPose &pose)
 {
-    const auto now = std::chrono::system_clock::now().time_since_epoch();
-    const auto sec = std::chrono::duration_cast<std::chrono::seconds>(now);
-    const auto nsec = std::chrono::duration_cast<std::chrono::nanoseconds>(now - sec);
+    static const std::array<const char *, 3> kThumbJoints = {"CMC", "MCP", "IP"};
+    static const std::array<const char *, 3> kFingerJoints = {"MCP", "PIP", "DIP"};
+    const auto &angles = pose.GetHandAngles();
 
-    outMsg.stamp_sec = static_cast<int64_t>(sec.count());
-    outMsg.stamp_nanosec = static_cast<uint32_t>(nsec.count());
-    outMsg.is_right_hand = pose.IsRight();
-    outMsg.valid_joint_count = 0;
-
-    const auto &angles = pose.GetHandAngles(); // [finger][joint] -> Euler(roll,pitch,yaw)
-
-    size_t outIndex = 0;
-    for (size_t fingerIndex = 0; fingerIndex < angles.size() && outIndex < 15; ++fingerIndex)
+    std::ostringstream out;
+    out << std::fixed << std::setprecision(3);
+    for (size_t fingerIndex = 0; fingerIndex < kFingerNames.size(); ++fingerIndex)
     {
-        for (size_t jointIndex = 0; jointIndex < angles[fingerIndex].size() && outIndex < 15; ++jointIndex)
+        if (fingerIndex > 0)
         {
-            const Vect3D &e = angles[fingerIndex][jointIndex];
-            outMsg.finger[outIndex] = static_cast<uint8_t>(fingerIndex);
-            outMsg.joint_index[outIndex] = static_cast<uint8_t>(jointIndex);
-            outMsg.joint[outIndex] = ToJointCode(fingerIndex, jointIndex);
-            outMsg.roll[outIndex] = QuantizeTo3Decimals(e.GetX());
-            outMsg.pitch[outIndex] = QuantizeTo3Decimals(e.GetY());
-            outMsg.yaw[outIndex] = QuantizeTo3Decimals(e.GetZ());
-            ++outIndex;
+            out << '\n';
+        }
+        out << kFingerNames[fingerIndex] << ": ";
+        const auto &jointNames = (fingerIndex == 0) ? kThumbJoints : kFingerJoints;
+
+        for (size_t jointIndex = 0; jointIndex < 3; ++jointIndex)
+        {
+            if (jointIndex > 0)
+            {
+                out << "   ";
+            }
+            out << jointNames[jointIndex] << ":";
+            if (fingerIndex < angles.size() && jointIndex < angles[fingerIndex].size())
+            {
+                const Vect3D &e = angles[fingerIndex][jointIndex];
+                out << QuantizeTo3Decimals(e.GetX()) << ","
+                    << QuantizeTo3Decimals(e.GetY()) << ","
+                    << QuantizeTo3Decimals(e.GetZ());
+            }
+            else
+            {
+                out << "0.000,0.000,0.000";
+            }
         }
     }
-
-    outMsg.valid_joint_count = static_cast<uint8_t>(outIndex);
+    return out.str();
 }
 
 int main()
@@ -226,8 +155,9 @@ int main()
                 continue;
             }
 
+            std::string compactText = BuildCompactEulerText(pose);
             glove_hand_msgs_msg_dds__HandEuler_ msg{};
-            FillHandEulerMessage(pose, msg);
+            msg.euler_text = const_cast<char *>(compactText.c_str());
 
             const dds_entity_t writer = rightHand ? right_writer : left_writer;
             dds_return_t rc = dds_write(writer, &msg);
@@ -237,7 +167,9 @@ int main()
             }
             else
             {
-                PrintAngleMessageByFinger(msg);
+                std::cout << (rightHand ? "[Right]" : "[Left]") << '\n'
+                          << compactText << "\n"
+                          << std::endl;
             }
         }
 
