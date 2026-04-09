@@ -44,7 +44,7 @@ static void SignalHandler(int)
     g_stop = true;
 }
 
-static float RoundTo3Decimals(float value)
+static float QuantizeTo3Decimals(float value)
 {
     return std::round(value * 1000.0f) / 1000.0f;
 }
@@ -149,9 +149,9 @@ static void FillHandEulerMessage(const HandPose &pose, glove_hand_msgs_msg_dds__
             outMsg.finger[outIndex] = static_cast<uint8_t>(fingerIndex);
             outMsg.joint_index[outIndex] = static_cast<uint8_t>(jointIndex);
             outMsg.joint[outIndex] = ToJointCode(fingerIndex, jointIndex);
-            outMsg.roll[outIndex] = RoundTo3Decimals(e.GetX());
-            outMsg.pitch[outIndex] = RoundTo3Decimals(e.GetY());
-            outMsg.yaw[outIndex] = RoundTo3Decimals(e.GetZ());
+            outMsg.roll[outIndex] = QuantizeTo3Decimals(e.GetX());
+            outMsg.pitch[outIndex] = QuantizeTo3Decimals(e.GetY());
+            outMsg.yaw[outIndex] = QuantizeTo3Decimals(e.GetZ());
             ++outIndex;
         }
     }
