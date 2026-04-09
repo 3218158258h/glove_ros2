@@ -25,7 +25,9 @@ using namespace SGCore::Kinematics;
 static std::atomic<bool> g_stop{false};
 static constexpr std::chrono::milliseconds kPublishInterval{15}; // ~66.7 Hz
 static constexpr uint8_t kJointsPerFinger = 3;
-static constexpr uint8_t kMaxJointCount = 15;
+static constexpr uint8_t kFingerCount = 5;
+static constexpr uint8_t kMaxJointCount = kJointsPerFinger * kFingerCount;
+static constexpr float kDefaultEulerValue = 0.0f;
 
 enum JointCode : uint8_t
 {
@@ -36,7 +38,7 @@ enum JointCode : uint8_t
     IP = 4,
     UNKNOWN = 255,
 };
-static const std::array<const char *, 5> kFingerNames = {
+static const std::array<const char *, kFingerCount> kFingerNames = {
     "Thumb", "Index", "Middle", "Ring", "Pinky"};
 
 static void SignalHandler(int)
@@ -95,7 +97,7 @@ static std::string BuildCompactEulerText(const glove_hand_msgs_msg_dds__HandEule
             }
             else
             {
-                out << 0.0f << ',' << 0.0f << ',' << 0.0f;
+                out << kDefaultEulerValue << ',' << kDefaultEulerValue << ',' << kDefaultEulerValue;
             }
         }
     }
