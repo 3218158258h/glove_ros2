@@ -24,8 +24,8 @@ using namespace SGCore::Kinematics;
 
 static std::atomic<bool> g_stop{false};
 static constexpr std::chrono::milliseconds kPublishInterval{15}; // ~66.7 Hz
-static const std::array<const char *, 5> kFingerNames = {
-    "Thumb", "Index", "Middle", "Ring", "Pinky"};
+static constexpr uint8_t kJointsPerFinger = 3;
+static constexpr uint8_t kMaxJointCount = 15;
 
 enum JointCode : uint8_t
 {
@@ -36,6 +36,8 @@ enum JointCode : uint8_t
     IP = 4,
     UNKNOWN = 255,
 };
+static const std::array<const char *, 5> kFingerNames = {
+    "Thumb", "Index", "Middle", "Ring", "Pinky"};
 
 static void SignalHandler(int)
 {
@@ -61,10 +63,10 @@ static uint8_t ToJointCode(size_t fingerIndex, size_t jointIndex)
     return (jointIndex < fingerMap.size()) ? fingerMap[jointIndex] : UNKNOWN;
 }
 
-static const char *JointNameForFinger(size_t fingerIndex, size_t jointIndex)
+static const char *JointNameForFinger(uint8_t fingerIndex, uint8_t jointIndex)
 {
-    static const std::array<const char *, 3> kThumbJoints = {"CMC", "MCP", "IP"};
-    static const std::array<const char *, 3> kFingerJoints = {"MCP", "PIP", "DIP"};
+    static const std::array<const char *, kJointsPerFinger> kThumbJoints = {"CMC", "MCP", "IP"};
+    static const std::array<const char *, kJointsPerFinger> kFingerJoints = {"MCP", "PIP", "DIP"};
     if (fingerIndex == 0)
     {
         return (jointIndex < kThumbJoints.size()) ? kThumbJoints[jointIndex] : "UNK";
@@ -76,24 +78,24 @@ static std::string BuildCompactEulerText(const glove_hand_msgs_msg_dds__HandEule
 {
     std::ostringstream out;
     out << std::fixed << std::setprecision(3);
-    for (size_t finger = 0; finger < kFingerNames.size(); ++finger)
+    for (uint8_t finger = 0; finger < kFingerNames.size(); ++finger)
     {
         if (finger > 0)
         {
             out << '\n';
         }
         out << kFingerNames[finger] << ":";
-        for (size_t jointIndex = 0; jointIndex < 3; ++jointIndex)
+        for (uint8_t jointIndex = 0; jointIndex < kJointsPerFinger; ++jointIndex)
         {
-            const size_t flat = finger * 3 + jointIndex;
+            const size_t flat = static_cast<size_t>(finger) * kJointsPerFinger + jointIndex;
             out << ' ' << JointNameForFinger(finger, jointIndex) << ':';
-            if (flat < msg.valid_joint_count && flat < 15)
+            if (flat < msg.valid_joint_count && flat < kMaxJointCount)
             {
                 out << msg.roll[flat] << ',' << msg.pitch[flat] << ',' << msg.yaw[flat];
             }
             else
             {
-                out << "0.000,0.000,0.000";
+                out << 0.0f << ',' << 0.0f << ',' << 0.0f;
             }
         }
     }
@@ -124,9 +126,9 @@ static void FillHandEulerMessage(const HandPose &pose, glove_hand_msgs_msg_dds__
     const auto &angles = pose.GetHandAngles(); // [finger][joint] -> Euler(roll,pitch,yaw)
 
     size_t outIndex = 0;
-    for (size_t fingerIndex = 0; fingerIndex < angles.size() && outIndex < 15; ++fingerIndex)
+    for (size_t fingerIndex = 0; fingerIndex < angles.size() && outIndex < kMaxJointCount; ++fingerIndex)
     {
-        for (size_t jointIndex = 0; jointIndex < angles[fingerIndex].size() && outIndex < 15; ++jointIndex)
+        for (size_t jointIndex = 0; jointIndex < angles[fingerIndex].size() && outIndex < kMaxJointCount; ++jointIndex)
         {
             const Vect3D &e = angles[fingerIndex][jointIndex];
             outMsg.finger[outIndex] = static_cast<uint8_t>(fingerIndex);
