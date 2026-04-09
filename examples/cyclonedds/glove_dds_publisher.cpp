@@ -4,7 +4,9 @@
 #include <cmath>
 #include <csignal>
 #include <cstdint>
+#include <iomanip>
 #include <iostream>
+#include <sstream>
 #include <thread>
 
 #include <dds/dds.h>
@@ -22,6 +24,8 @@ using namespace SGCore::Kinematics;
 
 static std::atomic<bool> g_stop{false};
 static constexpr std::chrono::milliseconds kPublishInterval{15}; // ~66.7 Hz
+static const std::array<const char *, 5> kFingerNames = {
+    "Thumb", "Index", "Middle", "Ring", "Pinky"};
 
 enum JointCode : uint8_t
 {
@@ -55,6 +59,45 @@ static uint8_t ToJointCode(size_t fingerIndex, size_t jointIndex)
     // Other fingers: MCP -> PIP -> DIP
     static const std::array<uint8_t, 3> fingerMap = {MCP, PIP, DIP};
     return (jointIndex < fingerMap.size()) ? fingerMap[jointIndex] : UNKNOWN;
+}
+
+static const char *JointNameForFinger(size_t fingerIndex, size_t jointIndex)
+{
+    static const std::array<const char *, 3> kThumbJoints = {"CMC", "MCP", "IP"};
+    static const std::array<const char *, 3> kFingerJoints = {"MCP", "PIP", "DIP"};
+    if (fingerIndex == 0)
+    {
+        return (jointIndex < kThumbJoints.size()) ? kThumbJoints[jointIndex] : "UNK";
+    }
+    return (jointIndex < kFingerJoints.size()) ? kFingerJoints[jointIndex] : "UNK";
+}
+
+static std::string BuildCompactEulerText(const glove_hand_msgs_msg_dds__HandEuler_ &msg)
+{
+    std::ostringstream out;
+    out << std::fixed << std::setprecision(3);
+    for (size_t finger = 0; finger < kFingerNames.size(); ++finger)
+    {
+        if (finger > 0)
+        {
+            out << '\n';
+        }
+        out << kFingerNames[finger] << ":";
+        for (size_t jointIndex = 0; jointIndex < 3; ++jointIndex)
+        {
+            const size_t flat = finger * 3 + jointIndex;
+            out << ' ' << JointNameForFinger(finger, jointIndex) << ':';
+            if (flat < msg.valid_joint_count && flat < 15)
+            {
+                out << msg.roll[flat] << ',' << msg.pitch[flat] << ',' << msg.yaw[flat];
+            }
+            else
+            {
+                out << "0.000,0.000,0.000";
+            }
+        }
+    }
+    return out.str();
 }
 
 static bool EnsureSenseCom()
@@ -174,6 +217,11 @@ int main()
             if (rc != DDS_RETCODE_OK)
             {
                 std::cerr << "dds_write failed: " << dds_strretcode(-rc) << std::endl;
+            }
+            else
+            {
+                std::cout << (rightHand ? "[Right]\n" : "[Left]\n")
+                          << BuildCompactEulerText(msg) << std::endl;
             }
         }
 
