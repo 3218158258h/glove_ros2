@@ -6,6 +6,7 @@
 #include <cstdint>
 #include <iomanip>
 #include <iostream>
+#include <limits>
 #include <sstream>
 #include <thread>
 
@@ -28,6 +29,7 @@ static constexpr size_t kJointsPerFinger = 3;
 static constexpr size_t kFingerCount = 5;
 static constexpr size_t kMaxJointCount = kJointsPerFinger * kFingerCount;
 static constexpr float kDefaultEulerValue = 0.0f;
+static_assert(kMaxJointCount <= std::numeric_limits<uint8_t>::max(), "kMaxJointCount must fit in uint8_t");
 
 enum JointCode : uint8_t
 {
@@ -80,7 +82,7 @@ static std::string BuildCompactEulerText(const glove_hand_msgs_msg_dds__HandEule
 {
     std::ostringstream out;
     out << std::fixed << std::setprecision(3);
-    for (uint8_t finger = 0; finger < kFingerNames.size(); ++finger)
+    for (uint8_t finger = 0; finger < kFingerCount; ++finger)
     {
         if (finger > 0)
         {
@@ -89,11 +91,11 @@ static std::string BuildCompactEulerText(const glove_hand_msgs_msg_dds__HandEule
         out << kFingerNames[finger] << ":";
         for (uint8_t jointIndex = 0; jointIndex < kJointsPerFinger; ++jointIndex)
         {
-            const size_t flat = static_cast<size_t>(finger) * kJointsPerFinger + jointIndex;
+            const size_t flatIndex = static_cast<size_t>(finger) * kJointsPerFinger + jointIndex;
             out << ' ' << JointNameForFinger(finger, jointIndex) << ':';
-            if (flat < msg.valid_joint_count && flat < kMaxJointCount)
+            if (flatIndex < msg.valid_joint_count && flatIndex < kMaxJointCount)
             {
-                out << msg.roll[flat] << ',' << msg.pitch[flat] << ',' << msg.yaw[flat];
+                out << msg.roll[flatIndex] << ',' << msg.pitch[flatIndex] << ',' << msg.yaw[flatIndex];
             }
             else
             {
