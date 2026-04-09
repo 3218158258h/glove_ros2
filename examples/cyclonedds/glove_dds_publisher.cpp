@@ -24,9 +24,9 @@ using namespace SGCore::Kinematics;
 
 static std::atomic<bool> g_stop{false};
 static constexpr std::chrono::milliseconds kPublishInterval{15}; // ~66.7 Hz
-static constexpr uint8_t kJointsPerFinger = 3;
-static constexpr uint8_t kFingerCount = 5;
-static constexpr uint8_t kMaxJointCount = kJointsPerFinger * kFingerCount;
+static constexpr size_t kJointsPerFinger = 3;
+static constexpr size_t kFingerCount = 5;
+static constexpr size_t kMaxJointCount = kJointsPerFinger * kFingerCount;
 static constexpr float kDefaultEulerValue = 0.0f;
 
 enum JointCode : uint8_t
