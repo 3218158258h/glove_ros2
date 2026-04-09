@@ -4,7 +4,7 @@
 
 本示例展示如何：
 
-1. 使用 `examples/ros2_glove_hand_msgs` 的同构消息定义（单字段 `string euler_text`）；
+1. 使用 `examples/ros2_glove_hand_msgs` 的同构消息定义；
 2. 用 CycloneDDS 原生 API 直接发布手套欧拉角；
 3. 在 ROS2 侧通过同名同结构消息进行订阅/`ros2 topic echo`。
 
@@ -76,9 +76,9 @@ ros2 topic echo /glove/left/hand_euler glove_hand_msgs/msg/HandEuler
 
 ---
 
-## 消息内容格式
+## 关节编码约定
 
-`euler_text` 为多行紧凑文本，例如：
-
-- `Thumb: CMC:x,y,z   MCP:x,y,z   IP:x,y,z`
-- `Index: MCP:x,y,z   PIP:x,y,z   DIP:x,y,z`
+- finger: `0..4 = Thumb/Index/Middle/Ring/Pinky`
+- joint（关节类型枚举值，不是每根手指内部关节序号）:
+  - `Thumb` 三个关节序号是 `0/1/2`，对应 joint code: `0(CMC), 1(MCP), 4(IP)`
+  - `Other fingers` 三个关节序号是 `0/1/2`，对应 joint code: `1(MCP), 2(PIP), 3(DIP)`

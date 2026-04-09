@@ -4,9 +4,7 @@
 #include <cmath>
 #include <csignal>
 #include <cstdint>
-#include <iomanip>
 #include <iostream>
-#include <sstream>
 #include <thread>
 
 #include <dds/dds.h>
@@ -25,8 +23,15 @@ using namespace SGCore::Kinematics;
 static std::atomic<bool> g_stop{false};
 static constexpr std::chrono::milliseconds kPublishInterval{15}; // ~66.7 Hz
 
-static const std::array<const char *, 5> kFingerNames = {
-    "Thumb", "Index", "Middle", "Ring", "Pinky"};
+enum JointCode : uint8_t
+{
+    CMC = 0,
+    MCP = 1,
+    PIP = 2,
+    DIP = 3,
+    IP = 4,
+    UNKNOWN = 255,
+};
 
 static void SignalHandler(int)
 {
@@ -36,6 +41,20 @@ static void SignalHandler(int)
 static float QuantizeTo3Decimals(float value)
 {
     return std::round(value * 1000.0f) / 1000.0f;
+}
+
+static uint8_t ToJointCode(size_t fingerIndex, size_t jointIndex)
+{
+    if (fingerIndex == 0)
+    {
+        // Thumb: CMC -> MCP -> IP
+        static const std::array<uint8_t, 3> thumbMap = {CMC, MCP, IP};
+        return (jointIndex < thumbMap.size()) ? thumbMap[jointIndex] : UNKNOWN;
+    }
+
+    // Other fingers: MCP -> PIP -> DIP
+    static const std::array<uint8_t, 3> fingerMap = {MCP, PIP, DIP};
+    return (jointIndex < fingerMap.size()) ? fingerMap[jointIndex] : UNKNOWN;
 }
 
 static bool EnsureSenseCom()
@@ -48,44 +67,36 @@ static bool EnsureSenseCom()
     return SenseCom::StartupSenseCom();
 }
 
-static std::string BuildCompactEulerText(const HandPose &pose)
+static void FillHandEulerMessage(const HandPose &pose, glove_hand_msgs_msg_dds__HandEuler_ &outMsg)
 {
-    static const std::array<const char *, 3> kThumbJoints = {"CMC", "MCP", "IP"};
-    static const std::array<const char *, 3> kFingerJoints = {"MCP", "PIP", "DIP"};
-    const auto &angles = pose.GetHandAngles();
+    const auto now = std::chrono::system_clock::now().time_since_epoch();
+    const auto sec = std::chrono::duration_cast<std::chrono::seconds>(now);
+    const auto nsec = std::chrono::duration_cast<std::chrono::nanoseconds>(now - sec);
 
-    std::ostringstream out;
-    out << std::fixed << std::setprecision(3);
-    for (size_t fingerIndex = 0; fingerIndex < kFingerNames.size(); ++fingerIndex)
+    outMsg.stamp_sec = static_cast<int64_t>(sec.count());
+    outMsg.stamp_nanosec = static_cast<uint32_t>(nsec.count());
+    outMsg.is_right_hand = pose.IsRight();
+    outMsg.valid_joint_count = 0;
+
+    const auto &angles = pose.GetHandAngles(); // [finger][joint] -> Euler(roll,pitch,yaw)
+
+    size_t outIndex = 0;
+    for (size_t fingerIndex = 0; fingerIndex < angles.size() && outIndex < 15; ++fingerIndex)
     {
-        if (fingerIndex > 0)
+        for (size_t jointIndex = 0; jointIndex < angles[fingerIndex].size() && outIndex < 15; ++jointIndex)
         {
-            out << '\n';
-        }
-        out << kFingerNames[fingerIndex] << ": ";
-        const auto &jointNames = (fingerIndex == 0) ? kThumbJoints : kFingerJoints;
-
-        for (size_t jointIndex = 0; jointIndex < 3; ++jointIndex)
-        {
-            if (jointIndex > 0)
-            {
-                out << "   ";
-            }
-            out << jointNames[jointIndex] << ":";
-            if (fingerIndex < angles.size() && jointIndex < angles[fingerIndex].size())
-            {
-                const Vect3D &e = angles[fingerIndex][jointIndex];
-                out << QuantizeTo3Decimals(e.GetX()) << ","
-                    << QuantizeTo3Decimals(e.GetY()) << ","
-                    << QuantizeTo3Decimals(e.GetZ());
-            }
-            else
-            {
-                out << "0.000,0.000,0.000";
-            }
+            const Vect3D &e = angles[fingerIndex][jointIndex];
+            outMsg.finger[outIndex] = static_cast<uint8_t>(fingerIndex);
+            outMsg.joint_index[outIndex] = static_cast<uint8_t>(jointIndex);
+            outMsg.joint[outIndex] = ToJointCode(fingerIndex, jointIndex);
+            outMsg.roll[outIndex] = QuantizeTo3Decimals(e.GetX());
+            outMsg.pitch[outIndex] = QuantizeTo3Decimals(e.GetY());
+            outMsg.yaw[outIndex] = QuantizeTo3Decimals(e.GetZ());
+            ++outIndex;
         }
     }
-    return out.str();
+
+    outMsg.valid_joint_count = static_cast<uint8_t>(outIndex);
 }
 
 int main()
@@ -155,22 +166,14 @@ int main()
                 continue;
             }
 
-            std::string compactText = BuildCompactEulerText(pose);
             glove_hand_msgs_msg_dds__HandEuler_ msg{};
-            msg.euler_text = dds_string_dup(compactText.c_str());
+            FillHandEulerMessage(pose, msg);
 
             const dds_entity_t writer = rightHand ? right_writer : left_writer;
             dds_return_t rc = dds_write(writer, &msg);
-            dds_free(msg.euler_text);
             if (rc != DDS_RETCODE_OK)
             {
                 std::cerr << "dds_write failed: " << dds_strretcode(-rc) << std::endl;
-            }
-            else
-            {
-                std::cout << (rightHand ? "[Right]" : "[Left]") << '\n'
-                          << compactText << "\n"
-                          << std::endl;
             }
         }
 

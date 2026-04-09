@@ -2,14 +2,14 @@
 
 > English: This package defines custom ROS2 messages for SenseGlove Euler joint data.
 
-用于导入到 ROS2 工作空间的自定义消息包，定义了手套欧拉角文本数据：
+用于导入到 ROS2 工作空间的自定义消息包，定义了手套欧拉角关节数据：
 
-- `HandEuler.msg`（单一消息字段：`string euler_text`）
+- `HandEuler.msg`（单一最终消息）
 
-文本推荐格式（多行）：
+关节命名采用通用解剖名：
 
-- `Thumb: CMC:x,y,z   MCP:x,y,z   IP:x,y,z`
-- `Index: MCP:x,y,z   PIP:x,y,z   DIP:x,y,z`
+- 拇指：`CMC -> MCP -> IP`
+- 其余四指：`MCP -> PIP -> DIP`
 
 ## 导入与构建
 

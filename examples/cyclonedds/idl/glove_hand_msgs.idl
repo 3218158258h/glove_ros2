@@ -3,7 +3,16 @@ module glove_hand_msgs {
     module dds_ {
 
     struct HandEuler_ {
-      string euler_text;
+      long long stamp_sec;
+      unsigned long stamp_nanosec;
+      boolean is_right_hand;
+      uint8 valid_joint_count;
+      uint8 finger[15];
+      uint8 joint_index[15];
+      uint8 joint[15];
+      float roll[15];
+      float pitch[15];
+      float yaw[15];
     };
 
     };
