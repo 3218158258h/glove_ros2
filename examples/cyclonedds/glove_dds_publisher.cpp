@@ -1,9 +1,13 @@
+#include <algorithm>
 #include <array>
 #include <atomic>
 #include <chrono>
+#include <cmath>
 #include <csignal>
 #include <cstdint>
+#include <iomanip>
 #include <iostream>
+#include <sstream>
 #include <thread>
 
 #include <dds/dds.h>
@@ -32,9 +36,71 @@ enum JointCode : uint8_t
     UNKNOWN = 255,
 };
 
+static const std::array<const char *, 5> kFingerNames = {
+    "Thumb", "Index", "Middle", "Ring", "Pinky"};
+
 static void SignalHandler(int)
 {
     g_stop = true;
+}
+
+static float RoundTo3Decimals(float value)
+{
+    return std::round(value * 1000.0f) / 1000.0f;
+}
+
+static const char *FingerNameOrUnknown(uint8_t fingerIndex)
+{
+    return (fingerIndex < kFingerNames.size()) ? kFingerNames[fingerIndex] : "Unknown";
+}
+
+static const char *JointNameForFinger(uint8_t fingerIndex, uint8_t jointIndex)
+{
+    static const std::array<const char *, 3> kThumbJointNames = {"CMC", "MCP", "IP"};
+    static const std::array<const char *, 3> kFingerJointNames = {"MCP", "PIP", "DIP"};
+    if (fingerIndex == 0)
+    {
+        return (jointIndex < kThumbJointNames.size()) ? kThumbJointNames[jointIndex] : "UnknownJoint";
+    }
+    return (jointIndex < kFingerJointNames.size()) ? kFingerJointNames[jointIndex] : "UnknownJoint";
+}
+
+static void PrintAngleMessageByFinger(const glove_hand_msgs_msg_dds__HandEuler_ &msg)
+{
+    const uint8_t validCount = std::min<uint8_t>(msg.valid_joint_count, 15);
+    std::cout << (msg.is_right_hand ? "[Right]" : "[Left]") << " Angle" << std::endl;
+    for (uint8_t finger = 0; finger < 5; ++finger)
+    {
+        std::ostringstream line;
+        line << std::fixed << std::setprecision(3);
+        line << "  " << FingerNameOrUnknown(finger) << ": ";
+
+        bool printedAnyJoint = false;
+        for (uint8_t i = 0; i < validCount; ++i)
+        {
+            if (msg.finger[i] != finger)
+            {
+                continue;
+            }
+            if (printedAnyJoint)
+            {
+                line << " | ";
+            }
+
+            line << JointNameForFinger(finger, msg.joint_index[i])
+                 << " (关节" << static_cast<int>(msg.joint_index[i]) << ")"
+                 << " [euler_x, euler_y, euler_z]="
+                 << msg.roll[i] << ", " << msg.pitch[i] << ", " << msg.yaw[i];
+            printedAnyJoint = true;
+        }
+
+        if (!printedAnyJoint)
+        {
+            line << "(no data)";
+        }
+        std::cout << line.str() << std::endl;
+    }
+    std::cout << std::endl;
 }
 
 static uint8_t ToJointCode(size_t fingerIndex, size_t jointIndex)
@@ -83,9 +149,9 @@ static void FillHandEulerMessage(const HandPose &pose, glove_hand_msgs_msg_dds__
             outMsg.finger[outIndex] = static_cast<uint8_t>(fingerIndex);
             outMsg.joint_index[outIndex] = static_cast<uint8_t>(jointIndex);
             outMsg.joint[outIndex] = ToJointCode(fingerIndex, jointIndex);
-            outMsg.roll[outIndex] = e.GetX();
-            outMsg.pitch[outIndex] = e.GetY();
-            outMsg.yaw[outIndex] = e.GetZ();
+            outMsg.roll[outIndex] = RoundTo3Decimals(e.GetX());
+            outMsg.pitch[outIndex] = RoundTo3Decimals(e.GetY());
+            outMsg.yaw[outIndex] = RoundTo3Decimals(e.GetZ());
             ++outIndex;
         }
     }
@@ -168,6 +234,10 @@ int main()
             if (rc != DDS_RETCODE_OK)
             {
                 std::cerr << "dds_write failed: " << dds_strretcode(-rc) << std::endl;
+            }
+            else
+            {
+                PrintAngleMessageByFinger(msg);
             }
         }
 
